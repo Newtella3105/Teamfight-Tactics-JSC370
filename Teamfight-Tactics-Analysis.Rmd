@@ -26,6 +26,10 @@ library(knitr)
 library(gridExtra)
 ```
 
+# Github Link:
+
+https://github.com/Newtella3105/Teamfight-Tactics-JSC370
+
 # Background
 
 Teamfight Tactics (TFT) is an auto-battler strategy game developed by Riot Games, where players build teams of champions and battle against other players’ teams in a series of rounds. Each champion has unique traits and abilities that interact with other champions on the board. Over time, TFT introduces new sets, each containing different champions, traits, and mechanics.
