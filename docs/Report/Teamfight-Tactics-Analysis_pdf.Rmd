@@ -1673,34 +1673,30 @@ From the figure above, the best traits for Set 12 are Vanguard, Blaster and Hone
 
 # Summary
 
-This project investigated how champion stats, traits, and game design changes between Set 12 and Set 13 in *Teamfight Tactics* (TFT) influence team performance. By analyzing thousands of real ranked team compositions and applying multiple modeling approaches, we identified key structural changes and predictors of success in the evolving TFT metagame.
+This project examined how champion stats, traits, and design shifts between Set 12 and Set 13 in *Teamfight Tactics* (TFT) impact team performance, using thousands of real team compositions and multiple modeling approaches.
 
-## Key Findings
+### Key Findings
 
 - **Champion Stat Scaling**  
-  Champion stats (Health, Damage, DPS) scale positively with both cost and star level in both sets. However, Set 13 introduces a **sharper stat gradient**, primarily driven by the addition of **6-cost champions**, which significantly outpace lower-cost units in raw stats. This supports the hypothesis that Set 13 meaningfully expanded the power curve.
+  In both sets, champion stats (Health, Damage, DPS) scale positively with cost and star level. Set 13 introduces a **steeper scaling curve**, largely due to the addition of **6-cost champions** who significantly outpace lower-cost units in raw stats. This supports the hypothesis that Set 13 expands the power curve substantially.
 
 - **Normalized Stat Efficiency**  
-  After adjusting for the gold required to upgrade units (i.e., total cost at each star level), **1-cost champions provide the best stat-per-gold efficiency**. Normalized stats decline as unit cost increases, suggesting that **higher-cost champions are less efficient**, despite being more powerful in absolute terms.
+  When adjusting for star-up cost, **1-cost units deliver the highest value**, with normalized Health, Damage, and DPS declining as cost increases. This confirms the second hypothesis: high-cost units are not necessarily the most efficient in terms of stat-to-cost ratio.
 
-- **Stat Progression Consistency**  
-  Stat progression across star levels is remarkably consistent across sets, indicating that **design shifts in Set 13 built upon existing scaling rules** rather than redefining them. The key difference lies in the expanded ceiling rather than altered stat progression logic.
+- **Stat Consistency Across Sets**  
+  Stat progression across star levels is consistent between the two sets. This suggests that while overall power increased in Set 13 (due to new unit types), **the underlying scaling formulas were preserved**.
 
-- **Trait Dominance over Raw Stats**  
-  Predictive models consistently identified **traits as more important than raw stats** in explaining win rate and top-four rate. This underscores the central role of **trait synergies**, which amplify performance through interactions between units, rather than individual power alone.
+- **Trait Importance Over Stats**  
+  Random Forest models consistently identified **traits as stronger predictors** of win rate and top 4 rate compared to raw stats. This reinforces the idea that **synergy effects from traits dominate individual stat advantages**, aligning with the fourth hypothesis.
 
-- **Model Performance and Complexity**  
-  Among all model types tested—Linear Models (LM), Generalized Additive Models (GAM), and Random Forests (RF)—**Random Forest models using trait-only features performed best**, achieving the highest $R^2$ and lowest RMSE. This confirms that **nonlinear, interaction-based models are better suited** for capturing the combinatorial complexity of TFT.
+- **Model Performance**  
+  Among all models tested (LM, GAM, RF), **Random Forest with trait-only inputs** yielded the highest $R^2$ and lowest RMSE. This shows that nonlinear, interaction-heavy models are best suited to capture TFT’s complexity, supporting the final hypothesis.
 
-- **Top Traits by Set**  
-  Trait importance varied across sets, reflecting shifting metas and design goals:  
-  - *Set 12*: Vanguard, Blaster, and Honeymancy were key contributors to winning teams.  
-  - *Set 13*: Artillerist, Ambusher, and Experiment emerged as the most influential traits.
+- **Best Traits by Set**  
+  Trait importance analysis revealed that top-performing traits differ across sets:  
+  - *Set 12*: Vanguard, Blaster, and Honeymancy were most impactful  
+  - *Set 13*: Artillerist, Ambusher, and Experiment stood out
 
-## Overall Conclusion
+### Overall Conclusion
 
-The introduction of 6-cost champions in Set 13 marked a significant escalation in power, reshaping the competitive landscape. However, this power spike did not break existing game balance mechanisms; rather, it **layered new strategic depth onto the existing framework**. Across both sets, **traits remained the dominant factor in team success**, validating the game’s emphasis on synergy over raw strength.
-
-## Broader Implications and Limitations
-
-This analysis highlights the strength of trait-based design in sustaining strategic variety across TFT sets. However, it is limited by its reliance on **composition-level data**, which prevents precise measurement of individual unit contributions. Moreover, model predictions are constrained by the **accuracy and completeness of scraped data** from third-party sources. Future analyses could benefit from player-level match data or official Riot APIs to improve granularity and causal inference.
+The introduction of 6-cost units in Set 13 redefined the TFT metagame by raising power ceilings while preserving relative scaling rules. However, **raw stats alone do not determine success**. Instead, **team synergy via traits** remains the most reliable pathway to victory. Effective composition building relies not just on strong units, but on how well those units activate and complement each other's traits.
