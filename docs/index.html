@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Introduction and Methods</title>
+
+<script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="site_libs/lightable-0.0.1/lightable.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">TFT Champion & Trait Meta Analysis</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Intro &amp; Methods</a>
+</li>
+<li>
+  <a href="champ_stats.html">Champion Stats</a>
+</li>
+<li>
+  <a href="trait_summary.html">Trait Models &amp; Summary</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Introduction and Methods</h1>
+
+</div>
+
+
+<div id="github-link" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> Github Link:</h1>
+<p><a href="https://github.com/Newtella3105/Teamfight-Tactics-JSC370"
+class="uri">https://github.com/Newtella3105/Teamfight-Tactics-JSC370</a></p>
+</div>
+<div id="report" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Report</h1>
+<p><a href="Report/Teamfight-Tactics-Analysis_pdf.pdf"><strong>Download
+the full report (PDF)</strong></a></p>
+</div>
+<div id="introduction" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Introduction</h1>
+<p>This project analyzes champion and trait data from <strong>Teamfight
+Tactics (TFT)</strong> Sets 12 and 13 to understand how changes in
+champion cost and design influence balance and performance. TFT,
+developed by Riot Games, is an auto-battler game where players
+strategically build teams of champions that automatically fight in a
+series of combat rounds. Each new “set” introduces fresh units, traits,
+and mechanics that reshape the meta-game.</p>
+<p>Set 13 introduced a major change: <strong>6-cost champions</strong>
+with <strong>exclusive 4-star upgrades</strong>, expanding the power
+curve beyond the previous 5-cost maximum. This project aims to
+investigate how this design shift affects champion statistics, value
+efficiency, and trait-level impact on performance outcomes.</p>
+</div>
+<div id="background" class="section level1" number="4">
+<h1><span class="header-section-number">4</span> Background</h1>
+<p>In TFT, eight players face off in a round-robin format. Each player
+assembles a team of <strong>champions</strong> (also known as
+<strong>units</strong>) drawn from a shared shop. These units battle
+autonomously on a hexagonal <strong>board</strong> against other
+players’ teams.</p>
+<div id="key-concepts-and-definitions" class="section level2"
+number="4.1">
+<h2><span class="header-section-number">4.1</span> Key Concepts and
+Definitions</h2>
+<ul>
+<li><strong>Unit</strong>: A controllable champion with traits,
+abilities, and stats.</li>
+<li><strong>Trait</strong>: A label representing a champion’s role or
+origin (e.g., “Mage”, “Bruiser”). Traits activate bonuses when multiple
+units share the same trait, creating <strong>synergies</strong>.</li>
+<li><strong>Cost</strong>: The gold price to buy a unit (1–6).
+Higher-cost units are rarer and typically stronger.</li>
+<li><strong>Star Level</strong>: Units can be upgraded:
+<ul>
+<li>3 × 1-star → 2-star</li>
+<li>3 × 2-star → 3-star</li>
+<li>3 × 3-star → 4-star (Set 13 only)<br />
+The higher the star level, the stronger each attribute and ability of
+the unit becomes.</li>
+</ul></li>
+<li><strong>Health</strong>: Total damage a unit can absorb.</li>
+<li><strong>Damage</strong>: Damage dealt per basic attack.</li>
+<li><strong>DPS (Damage Per Second)</strong>: Average damage output per
+second.</li>
+<li><strong>Player Level</strong>: Determines how many units a player
+can deploy (max: 10) and affects odds of finding high-cost units in the
+shop.</li>
+<li><strong>Combat Round</strong>: A fight phase where units act
+automatically.</li>
+</ul>
+<p><img src="TFT.png" width="1194" /></p>
+</div>
+</div>
+<div id="scope-and-unit-of-analysis" class="section level1" number="5">
+<h1><span class="header-section-number">5</span> Scope and Unit of
+Analysis</h1>
+<p>The dataset includes win and top4 rates for thousands of team
+<strong>compositions</strong> (not individual units). (Note: win rate
+refers to the Top 1 Rate, i.e., the proportion of games where a
+composition finishes first. Each composition is a unique arrangement of
+champions and traits. Thus:</p>
+<ul>
+<li><strong>Each observation is a team composition</strong>.</li>
+<li><strong>Performance metrics (win/top4 rate) are per
+composition</strong>.</li>
+<li>To analyze <strong>unit-level impact</strong>, we decompose each
+composition into its champions and traits, then compute <strong>average
+performance</strong> for each unit or trait based on all compositions it
+appears in.<br />
+These are not raw per-unit win rates but are <strong>derived
+values</strong> from aggregate composition performance.</li>
+</ul>
+</div>
+<div id="research-questions" class="section level1" number="6">
+<h1><span class="header-section-number">6</span> Research Questions</h1>
+<ul>
+<li>How do champion stats (health, damage, DPS) scale with cost in Set
+13 compared to Set 12, and how does this affect win rate?</li>
+<li>How does the distribution of win rates vary across champion cost
+tiers and traits?</li>
+<li>Are normalized stats (stat divided by total cost at star level)
+predictive of win rate?</li>
+<li>Which predictors (stats, traits, or both) best explain
+champion-level win rate?</li>
+<li>Which model type (LM, GAM, RF) performs best in predicting win rate
+across sets and inputs?</li>
+</ul>
+</div>
+<div id="hypotheses" class="section level1" number="7">
+<h1><span class="header-section-number">7</span> Hypotheses</h1>
+<ul>
+<li>The introduction of 6-cost champions in Set 13 creates a significant
+win rate advantage over lower-cost units.</li>
+<li>While high-cost units have greater absolute stats, low-cost units
+offer better stat efficiency and may perform better relative to
+cost.</li>
+<li>Champion stat scaling across star levels is consistent across sets,
+suggesting win rate differences stem from design changes rather than
+inflation.</li>
+<li>Traits are stronger predictors of win rate than raw stats, due to
+synergy bonuses that impact team-level performance.</li>
+<li>Random Forest models will outperform LM and GAM in predicting win
+rate due to their ability to model nonlinear interactions between stats
+and traits.</li>
+</ul>
+</div>
+<div id="methods" class="section level1" number="8">
+<h1><span class="header-section-number">8</span> Methods</h1>
+<p>The primary data sources for this project were:</p>
+<ul>
+<li><strong><a href="https://tftactics.gg">TFTactics.gg</a></strong>:
+Used to scrape champion and trait data, including base stats (health,
+damage, DPS) and trait descriptions.</li>
+<li><strong><a
+href="https://tftactics-data.kda.gg/meta/report">TFTactics Meta Report
+Endpoint</a></strong>: Used to scrape win rate and top4 rate for full
+team compositions, available via the JSON structure
+<code>data$summary-section</code>.</li>
+</ul>
+<p>Data were collected for <strong>Set 12</strong> and <strong>Set
+13</strong> using a combination of R tools (<code>rvest</code>,
+<code>jsonlite</code>, <code>stringr</code>, etc.) and archived through
+the <a href="https://web.archive.org">Wayback Machine</a> to ensure
+consistency after TFT site updates.</p>
+<div id="data-wrangling" class="section level2" number="8.1">
+<h2><span class="header-section-number">8.1</span> Data Wrangling</h2>
+<p>Once the data was acquired, the following steps were taken:</p>
+<div id="cleaning-champion-and-trait-names" class="section level3"
+number="8.1.1">
+<h3><span class="header-section-number">8.1.1</span> Cleaning Champion
+and Trait Names</h3>
+<p>Champion and trait names were cleaned by removing artifacts such as
+“TFT | Guide” using string operations like <code>str_remove_all()</code>
+to standardize text across sources.</p>
+</div>
+<div id="handling-missing-data" class="section level3" number="8.1.2">
+<h3><span class="header-section-number">8.1.2</span> Handling Missing
+Data</h3>
+<p>No missing values were identified in the scraped champion and trait
+data.</p>
+</div>
+<div id="filtering-invalid-traits" class="section level3"
+number="8.1.3">
+<h3><span class="header-section-number">8.1.3</span> Filtering Invalid
+Traits</h3>
+<p>Due to a scraping error in Set 12, many champions were incorrectly
+assigned a “Portal” trait with no type. These were filtered out, and
+only valid trait-typed rows were retained.</p>
+</div>
+<div id="composition-win-rate-source" class="section level3"
+number="8.1.4">
+<h3><span class="header-section-number">8.1.4</span> Composition Win
+Rate Source</h3>
+<p>Win and top4 rates for team compositions were extracted from: -
+<strong><a
+href="https://tftactics-data.kda.gg/meta/report">https://tftactics-data.kda.gg/meta/report</a></strong><br />
+This endpoint returns JSON data with composition performance metrics for
+ranked games, including the list of champions in each composition and
+their aggregate performance.</p>
+</div>
+<div id="composition-decomposition" class="section level3"
+number="8.1.5">
+<h3><span class="header-section-number">8.1.5</span> Composition
+Decomposition</h3>
+<p>Each composition was split into individual champion and trait
+components. For each champion or trait, we then computed <strong>average
+win/top4 rates across all compositions in which they appeared</strong>.
+These derived statistics allow us to model unit-level performance from
+team-level data.</p>
+</div>
+<div id="modeling-approach" class="section level3" number="8.1.6">
+<h3><span class="header-section-number">8.1.6</span> Modeling
+Approach</h3>
+<p>To assess how well champion stats and traits predict
+composition-level win rate, we implemented three modeling
+frameworks:</p>
+<ul>
+<li><strong>Linear Models (LM)</strong>: To estimate linear
+relationships between predictors (stats and/or traits) and win
+rate.</li>
+<li><strong>Generalized Additive Models (GAM)</strong>: To capture
+non-linear effects of continuous variables like health and DPS using
+smooth functions.</li>
+<li><strong>Random Forest (RF)</strong>: A non-parametric ensemble model
+used to capture complex interactions between traits and stats with
+improved predictive performance.</li>
+</ul>
+<p>Each model was trained on unit-level datasets, where each row
+represents a champion along with the average win rate across all
+compositions in which it appears. Models were evaluated using <span
+class="math inline">\(R^2\)</span>, RMSE, and AIC (where
+applicable).</p>
+</div>
+</div>
+</div>
+<div id="variable-summary" class="section level1" number="9">
+<h1><span class="header-section-number">9</span> Variable Summary</h1>
+<p>The following table summarizes the key variables used in this
+analysis:</p>
+<table class="table table-striped table-hover table-condensed" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Table 1: Summary of Key Variables Used in Analysis
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;font-weight: bold;color: white !important;background-color: rgba(44, 62, 80, 255) !important;">
+Variable
+</th>
+<th style="text-align:left;font-weight: bold;color: white !important;background-color: rgba(44, 62, 80, 255) !important;">
+Type
+</th>
+<th style="text-align:left;font-weight: bold;color: white !important;background-color: rgba(44, 62, 80, 255) !important;">
+Description
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+win_rate
+</td>
+<td style="text-align:left;">
+Numeric
+</td>
+<td style="text-align:left;">
+Top 1 Rate — the proportion of games where the composition finished 1st
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+top4_rate
+</td>
+<td style="text-align:left;">
+Numeric
+</td>
+<td style="text-align:left;">
+Proportion of games where the composition placed in the top 4
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+cost
+</td>
+<td style="text-align:left;">
+Numeric
+</td>
+<td style="text-align:left;">
+Champion gold cost (ranges from 1 to 6)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+health
+</td>
+<td style="text-align:left;">
+Numeric
+</td>
+<td style="text-align:left;">
+HP of the champion at each star level
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+dps
+</td>
+<td style="text-align:left;">
+Numeric
+</td>
+<td style="text-align:left;">
+Damage per second (includes attack speed)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+damage
+</td>
+<td style="text-align:left;">
+Numeric
+</td>
+<td style="text-align:left;">
+Damage dealt per basic attack
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+trait_*
+</td>
+<td style="text-align:left;">
+Binary (0/1)
+</td>
+<td style="text-align:left;">
+Dummy variable indicating whether a unit has a specific trait
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,172 @@
+---
+title: "Introduction and Methods"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+---
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Install necessary packages (if not already installed)
+# install.packages(c("rvest", "tidyverse", "stringr", "purrr"))
+# install.packages("GGally")
+# install.packages("plotly")
+# install.packages("kableExtra")
+# install.packages("randomForest")
+# install.packages("DT")
+
+library(plotly)
+library(GGally)
+library(rvest)
+library(tidyverse)
+library(dplyr)
+library(purrr)
+library(stringr)
+library(jsonlite)
+library(kableExtra)
+library(tidyr)
+library(ggplot2)
+library(knitr)
+library(gridExtra)
+library(jsonlite)
+library(tibble)
+library(mgcv)
+library(randomForest)
+library(DT)
+```
+
+# Github Link:
+
+https://github.com/Newtella3105/Teamfight-Tactics-JSC370
+
+# Report
+[**Download the full report (PDF)**](Report/Teamfight-Tactics-Analysis_pdf.pdf)
+
+# Introduction
+
+This project analyzes champion and trait data from **Teamfight Tactics (TFT)** Sets 12 and 13 to understand how changes in champion cost and design influence balance and performance. TFT, developed by Riot Games, is an auto-battler game where players strategically build teams of champions that automatically fight in a series of combat rounds. Each new "set" introduces fresh units, traits, and mechanics that reshape the meta-game. 
+
+Set 13 introduced a major change: **6-cost champions** with **exclusive 4-star upgrades**, expanding the power curve beyond the previous 5-cost maximum. This project aims to investigate how this design shift affects champion statistics, value efficiency, and trait-level impact on performance outcomes.
+
+# Background
+
+In TFT, eight players face off in a round-robin format. Each player assembles a team of **champions** (also known as **units**) drawn from a shared shop. These units battle autonomously on a hexagonal **board** against other players’ teams.
+
+## Key Concepts and Definitions
+
+- **Unit**: A controllable champion with traits, abilities, and stats.
+- **Trait**: A label representing a champion’s role or origin (e.g., "Mage", "Bruiser"). Traits activate bonuses when multiple units share the same trait, creating **synergies**.
+- **Cost**: The gold price to buy a unit (1–6). Higher-cost units are rarer and typically stronger.
+- **Star Level**: Units can be upgraded:
+  - 3 × 1-star → 2-star
+  - 3 × 2-star → 3-star
+  - 3 × 3-star → 4-star (Set 13 only)  
+  The higher the star level, the stronger each attribute and ability of the unit becomes.
+- **Health**: Total damage a unit can absorb.
+- **Damage**: Damage dealt per basic attack.
+- **DPS (Damage Per Second)**: Average damage output per second.
+- **Player Level**: Determines how many units a player can deploy (max: 10) and affects odds of finding high-cost units in the shop.
+- **Combat Round**: A fight phase where units act automatically.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::include_graphics("TFT.png")
+```
+
+# Scope and Unit of Analysis
+
+The dataset includes win and top4 rates for thousands of team **compositions** (not individual units). (Note: win rate refers to the Top 1 Rate, i.e., the proportion of games where a composition finishes first. Each composition is a unique arrangement of champions and traits. Thus:
+
+- **Each observation is a team composition**.
+- **Performance metrics (win/top4 rate) are per composition**.
+- To analyze **unit-level impact**, we decompose each composition into its champions and traits, then compute **average performance** for each unit or trait based on all compositions it appears in.  
+  These are not raw per-unit win rates but are **derived values** from aggregate composition performance.
+
+# Research Questions
+
+- How do champion stats (health, damage, DPS) scale with cost in Set 13 compared to Set 12, and how does this affect win rate?
+- How does the distribution of win rates vary across champion cost tiers and traits?
+- Are normalized stats (stat divided by total cost at star level) predictive of win rate?
+- Which predictors (stats, traits, or both) best explain champion-level win rate?
+- Which model type (LM, GAM, RF) performs best in predicting win rate across sets and inputs?
+
+# Hypotheses
+
+- The introduction of 6-cost champions in Set 13 creates a significant win rate advantage over lower-cost units.
+- While high-cost units have greater absolute stats, low-cost units offer better stat efficiency and may perform better relative to cost.
+- Champion stat scaling across star levels is consistent across sets, suggesting win rate differences stem from design changes rather than inflation.
+- Traits are stronger predictors of win rate than raw stats, due to synergy bonuses that impact team-level performance.
+- Random Forest models will outperform LM and GAM in predicting win rate due to their ability to model nonlinear interactions between stats and traits.
+
+# Methods
+
+The primary data sources for this project were:
+
+- **[TFTactics.gg](https://tftactics.gg)**: Used to scrape champion and trait data, including base stats (health, damage, DPS) and trait descriptions.
+- **[TFTactics Meta Report Endpoint](https://tftactics-data.kda.gg/meta/report)**: Used to scrape win rate and top4 rate for full team compositions, available via the JSON structure `data$summary-section`.
+
+Data were collected for **Set 12** and **Set 13** using a combination of R tools (`rvest`, `jsonlite`, `stringr`, etc.) and archived through the [Wayback Machine](https://web.archive.org) to ensure consistency after TFT site updates.
+
+## Data Wrangling
+
+Once the data was acquired, the following steps were taken:
+
+### Cleaning Champion and Trait Names
+
+Champion and trait names were cleaned by removing artifacts such as "TFT | Guide" using string operations like `str_remove_all()` to standardize text across sources.
+
+### Handling Missing Data
+
+No missing values were identified in the scraped champion and trait data.
+
+### Filtering Invalid Traits
+
+Due to a scraping error in Set 12, many champions were incorrectly assigned a "Portal" trait with no type. These were filtered out, and only valid trait-typed rows were retained.
+
+### Composition Win Rate Source
+
+Win and top4 rates for team compositions were extracted from:
+- **[https://tftactics-data.kda.gg/meta/report](https://tftactics-data.kda.gg/meta/report)**  
+This endpoint returns JSON data with composition performance metrics for ranked games, including the list of champions in each composition and their aggregate performance.
+
+### Composition Decomposition
+
+Each composition was split into individual champion and trait components. For each champion or trait, we then computed **average win/top4 rates across all compositions in which they appeared**. These derived statistics allow us to model unit-level performance from team-level data.
+
+### Modeling Approach
+
+To assess how well champion stats and traits predict composition-level win rate, we implemented three modeling frameworks:
+
+- **Linear Models (LM)**: To estimate linear relationships between predictors (stats and/or traits) and win rate.
+- **Generalized Additive Models (GAM)**: To capture non-linear effects of continuous variables like health and DPS using smooth functions.
+- **Random Forest (RF)**: A non-parametric ensemble model used to capture complex interactions between traits and stats with improved predictive performance.
+
+Each model was trained on unit-level datasets, where each row represents a champion along with the average win rate across all compositions in which it appears. Models were evaluated using $R^2$, RMSE, and AIC (where applicable).
+
+# Variable Summary
+
+The following table summarizes the key variables used in this analysis:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Variable Summary Table
+#############################################
+
+variable_summary <- data.frame(
+  Variable = c("win_rate", "top4_rate", "cost", "health", "dps", "damage", "trait_*"),
+  Type = c("Numeric", "Numeric", "Numeric", "Numeric", "Numeric", "Numeric", "Binary (0/1)"),
+  Description = c(
+    "Top 1 Rate — the proportion of games where the composition finished 1st",
+    "Proportion of games where the composition placed in the top 4",
+    "Champion gold cost (ranges from 1 to 6)",
+    "HP of the champion at each star level",
+    "Damage per second (includes attack speed)",
+    "Damage dealt per basic attack",
+    "Dummy variable indicating whether a unit has a specific trait"
+  )
+)
+
+kable(variable_summary, format = "html", caption = "Table 1: Summary of Key Variables Used in Analysis") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE) %>%
+  row_spec(0, bold = TRUE, color = "white", background = "#2C3E50")
+```

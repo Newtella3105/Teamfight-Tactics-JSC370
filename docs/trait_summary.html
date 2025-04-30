@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Trait Win Rate and Model Summary</title>
+
+<script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet" />
+<script src="site_libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+<script src="site_libs/plotly-binding-4.10.4/plotly.js"></script>
+<script src="site_libs/typedarray-0.1/typedarray.min.js"></script>
+<link href="site_libs/crosstalk-1.2.1/css/crosstalk.min.css" rel="stylesheet" />
+<script src="site_libs/crosstalk-1.2.1/js/crosstalk.min.js"></script>
+<link href="site_libs/plotly-htmlwidgets-css-2.11.1/plotly-htmlwidgets.css" rel="stylesheet" />
+<script src="site_libs/plotly-main-2.11.1/plotly-latest.min.js"></script>
+<link href="site_libs/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet" />
+<script src="site_libs/datatables-binding-0.33/datatables.js"></script>
+<link href="site_libs/dt-core-1.13.6/css/jquery.dataTables.min.css" rel="stylesheet" />
+<link href="site_libs/dt-core-1.13.6/css/jquery.dataTables.extra.css" rel="stylesheet" />
+<script src="site_libs/dt-core-1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="site_libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="site_libs/lightable-0.0.1/lightable.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">TFT Champion & Trait Meta Analysis</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Intro &amp; Methods</a>
+</li>
+<li>
+  <a href="champ_stats.html">Champion Stats</a>
+</li>
+<li>
+  <a href="trait_summary.html">Trait Models &amp; Summary</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Trait Win Rate and Model Summary</h1>
+
+</div>
+
+
+<div id="champion-and-trait-win-rate-analysis" class="section level1"
+number="1">
+<h1><span class="header-section-number">1</span> Champion and Trait Win
+Rate Analysis</h1>
+<p>So far, we’ve explored how champion stats like health, damage, and
+DPS scale across costs and star levels in Sets 12 and 13. However, high
+stats don’t necessarily translate to better performance. To assess how
+effective champions and traits actually are in-game, we now incorporate
+<strong>win rate</strong> as our performance metric.</p>
+<p>Win rate in this analysis refers to the <strong>Top 1 Rate</strong>,
+derived from thousands of real team compositions. Each champion’s win
+rate is averaged across all compositions in which it appears. This
+allows us to examine whether certain champions or traits consistently
+contribute to victory — regardless of raw stats.</p>
+<p>The following interactive visualizations explore: - How champion cost
+relates to average win rate<br />
+- Which traits are most strongly associated with winning teams</p>
+<div id="champion-win-rate-vs-cost" class="section level2" number="1.1">
+<h2><span class="header-section-number">1.1</span> Champion Win Rate vs
+Cost</h2>
+<div class="plotly html-widget html-fill-item" id="htmlwidget-63f409eaf5dad8f9e830" style="width:672px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-63f409eaf5dad8f9e830">{"x":{"visdat":{"224c79ba3da5":["function () ","plotlyVisDat"]},"cur_data":"224c79ba3da5","attrs":{"224c79ba3da5":{"x":{},"y":{},"mode":"markers","text":{},"hoverinfo":"text","color":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"type":"scatter"}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"title":"Champion Win Rate vs Cost","xaxis":{"domain":[0,1],"automargin":true,"title":"Champion Cost"},"yaxis":{"domain":[0,1],"automargin":true,"title":"Average Win Rate"},"legend":{"title":{"text":"<b>Set<\/b>"}},"hovermode":"closest","showlegend":true},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"x":[2,2,1,3,1,3,5,5,2,2,3,5,1,4,3,4,2,4,3,3,1,1,3,5,4,2,3,1,5,3,5,5,1,4,3,4,3,2,1,2,3,4,1,4,2,5,4,1,2,5,1,3,2,4,2,1,4,3,3,1,1,6,3,5,1,2,2,1,4],"y":[0.074499999999999997,0.021000000000000001,0.0060000000000000001,0.038300000000000001,0.093666666666666662,0.093666666666666662,0.034666666666666665,0.030500000000000003,0.030500000000000003,0.028000000000000001,0.028000000000000001,0.016,0.060249999999999998,0.060249999999999998,0.14099999999999999,0.024875000000000001,0.090166666666666659,0.024400000000000002,0.027625,0.14899999999999999,0.016,0.057999999999999996,0.025999999999999999,0.025999999999999999,0.015166666666666667,0.002,0.022800000000000001,0.01125,0.01525,0.11299999999999999,0.11299999999999999,0.030833333333333334,0.030833333333333334,0.012,0.012,0.042374999999999996,0.044166666666666667,0.0465,0.11799999999999999,0.074499999999999997,0.074499999999999997,0.055750000000000001,0,0.032785714285714286,0.090166666666666659,0.090166666666666659,0.0053333333333333332,0.024,0.072333333333333333,0.080499999999999988,0.0135,0.058249999999999996,0.040000000000000001,0.074499999999999997,0.052499999999999998,0.055750000000000001,0.090499999999999997,0.086499999999999994,0.022000000000000002,0.022000000000000002,0.13200000000000001,0.13200000000000001,0.074999999999999997,0.021000000000000001,0.14899999999999999,0.14899999999999999,0.035636363636363633,0.0080000000000000002,0.0080000000000000002],"mode":"markers","text":["Champion: Ahri <br>Set: Set 12 <br>Cost: 2 <br>Avg Win Rate: 0.0745","Champion: Akali <br>Set: Set 12 <br>Cost: 2 <br>Avg Win Rate: 0.021","Champion: Ashe <br>Set: Set 12 <br>Cost: 1 <br>Avg Win Rate: 0.006","Champion: Bard <br>Set: Set 12 <br>Cost: 3 <br>Avg Win Rate: 0.0383","Champion: Blitzcrank <br>Set: Set 12 <br>Cost: 1 <br>Avg Win Rate: 0.0937","Champion: Blitzcrank <br>Set: Set 12 <br>Cost: 3 <br>Avg Win Rate: 0.0937","Champion: Briar <br>Set: Set 12 <br>Cost: 5 <br>Avg Win Rate: 0.0347","Champion: Camille <br>Set: Set 12 <br>Cost: 5 <br>Avg Win Rate: 0.0305","Champion: Camille <br>Set: Set 12 <br>Cost: 2 <br>Avg Win Rate: 0.0305","Champion: Cassiopeia <br>Set: Set 12 <br>Cost: 2 <br>Avg Win Rate: 0.028","Champion: Cassiopeia <br>Set: Set 12 <br>Cost: 3 <br>Avg Win Rate: 0.028","Champion: Diana <br>Set: Set 12 <br>Cost: 5 <br>Avg Win Rate: 0.016","Champion: Elise <br>Set: Set 12 <br>Cost: 1 <br>Avg Win Rate: 0.0602","Champion: Elise <br>Set: Set 12 <br>Cost: 4 <br>Avg Win Rate: 0.0602","Champion: Ezreal <br>Set: Set 12 <br>Cost: 3 <br>Avg Win Rate: 0.141","Champion: Fiora <br>Set: Set 12 <br>Cost: 4 <br>Avg Win Rate: 0.0249","Champion: Galio <br>Set: Set 12 <br>Cost: 2 <br>Avg Win Rate: 0.0902","Champion: Gwen <br>Set: Set 12 <br>Cost: 4 <br>Avg Win Rate: 0.0244","Champion: Hecarim <br>Set: Set 12 <br>Cost: 3 <br>Avg Win Rate: 0.0276","Champion: Hwei <br>Set: Set 12 <br>Cost: 3 <br>Avg Win Rate: 0.149","Champion: Jax <br>Set: Set 12 <br>Cost: 1 <br>Avg Win Rate: 0.016","Champion: Jayce <br>Set: Set 12 <br>Cost: 1 <br>Avg Win Rate: 0.058","Champion: Jinx <br>Set: Set 12 <br>Cost: 3 <br>Avg Win Rate: 0.026","Champion: Jinx <br>Set: Set 12 <br>Cost: 5 <br>Avg Win Rate: 0.026","Champion: Kalista <br>Set: Set 12 <br>Cost: 4 <br>Avg Win Rate: 0.0152","Champion: Kassadin <br>Set: Set 12 <br>Cost: 2 <br>Avg Win Rate: 0.002","Champion: Katarina <br>Set: Set 12 <br>Cost: 3 <br>Avg Win Rate: 0.0228","Champion: Lillia <br>Set: Set 12 <br>Cost: 1 <br>Avg Win Rate: 0.0112","Champion: Milio <br>Set: Set 12 <br>Cost: 5 <br>Avg Win Rate: 0.0152","Champion: Mordekaiser <br>Set: Set 12 <br>Cost: 3 <br>Avg Win Rate: 0.113","Champion: Mordekaiser <br>Set: Set 12 <br>Cost: 5 <br>Avg Win Rate: 0.113","Champion: Morgana <br>Set: Set 12 <br>Cost: 5 <br>Avg Win Rate: 0.0308","Champion: Morgana <br>Set: Set 12 <br>Cost: 1 <br>Avg Win Rate: 0.0308","Champion: Nami <br>Set: Set 12 <br>Cost: 4 <br>Avg Win Rate: 0.012","Champion: Nami <br>Set: Set 12 <br>Cost: 3 <br>Avg Win Rate: 0.012","Champion: Nasus <br>Set: Set 12 <br>Cost: 4 <br>Avg Win Rate: 0.0424","Champion: Neeko <br>Set: Set 12 <br>Cost: 3 <br>Avg Win Rate: 0.0442","Champion: Nilah <br>Set: Set 12 <br>Cost: 2 <br>Avg Win Rate: 0.0465","Champion: Nomsy <br>Set: Set 12 <br>Cost: 1 <br>Avg Win Rate: 0.118","Champion: Nunu <br>Set: Set 12 <br>Cost: 2 <br>Avg Win Rate: 0.0745","Champion: Nunu <br>Set: Set 12 <br>Cost: 3 <br>Avg Win Rate: 0.0745","Champion: Olaf <br>Set: Set 12 <br>Cost: 4 <br>Avg Win Rate: 0.0558","Champion: Poppy <br>Set: Set 12 <br>Cost: 1 <br>Avg Win Rate: 0","Champion: Rakan <br>Set: Set 12 <br>Cost: 4 <br>Avg Win Rate: 0.0328","Champion: Rumble <br>Set: Set 12 <br>Cost: 2 <br>Avg Win Rate: 0.0902","Champion: Rumble <br>Set: Set 12 <br>Cost: 5 <br>Avg Win Rate: 0.0902","Champion: Ryze <br>Set: Set 12 <br>Cost: 4 <br>Avg Win Rate: 0.0053","Champion: Seraphine <br>Set: Set 12 <br>Cost: 1 <br>Avg Win Rate: 0.024","Champion: Shyvana <br>Set: Set 12 <br>Cost: 2 <br>Avg Win Rate: 0.0723","Champion: Smolder <br>Set: Set 12 <br>Cost: 5 <br>Avg Win Rate: 0.0805","Champion: Soraka <br>Set: Set 12 <br>Cost: 1 <br>Avg Win Rate: 0.0135","Champion: Swain <br>Set: Set 12 <br>Cost: 3 <br>Avg Win Rate: 0.0582","Champion: Syndra <br>Set: Set 12 <br>Cost: 2 <br>Avg Win Rate: 0.04","Champion: Taric <br>Set: Set 12 <br>Cost: 4 <br>Avg Win Rate: 0.0745","Champion: Tristana <br>Set: Set 12 <br>Cost: 2 <br>Avg Win Rate: 0.0525","Champion: Twitch <br>Set: Set 12 <br>Cost: 1 <br>Avg Win Rate: 0.0558","Champion: Varus <br>Set: Set 12 <br>Cost: 4 <br>Avg Win Rate: 0.0905","Champion: Veigar <br>Set: Set 12 <br>Cost: 3 <br>Avg Win Rate: 0.0865","Champion: Vex <br>Set: Set 12 <br>Cost: 3 <br>Avg Win Rate: 0.022","Champion: Vex <br>Set: Set 12 <br>Cost: 1 <br>Avg Win Rate: 0.022","Champion: Warwick <br>Set: Set 12 <br>Cost: 1 <br>Avg Win Rate: 0.132","Champion: Warwick <br>Set: Set 12 <br>Cost: 6 <br>Avg Win Rate: 0.132","Champion: Wukong <br>Set: Set 12 <br>Cost: 3 <br>Avg Win Rate: 0.075","Champion: Xerath <br>Set: Set 12 <br>Cost: 5 <br>Avg Win Rate: 0.021","Champion: Ziggs <br>Set: Set 12 <br>Cost: 1 <br>Avg Win Rate: 0.149","Champion: Ziggs <br>Set: Set 12 <br>Cost: 2 <br>Avg Win Rate: 0.149","Champion: Zilean <br>Set: Set 12 <br>Cost: 2 <br>Avg Win Rate: 0.0356","Champion: Zoe <br>Set: Set 12 <br>Cost: 1 <br>Avg Win Rate: 0.008","Champion: Zoe <br>Set: Set 12 <br>Cost: 4 <br>Avg Win Rate: 0.008"],"hoverinfo":["text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text"],"type":"scatter","name":"Set 12","marker":{"color":"rgba(102,194,165,1)","line":{"color":"rgba(102,194,165,1)"}},"textfont":{"color":"rgba(102,194,165,1)"},"error_y":{"color":"rgba(102,194,165,1)"},"error_x":{"color":"rgba(102,194,165,1)"},"line":{"color":"rgba(102,194,165,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[2,4,1,1,3,5,5,2,2,3,4,1,1,4,1,4,3,3,4,4,4,1,3,5,3,5,2,1,5,3,5,5,1,4,3,2,2,2,5,2,4,1,3,2,1,1,2,3,1,4,2,2,1,2,1,4,1],"y":[0,0.0014,0,0,0,0.0030000000000000001,0.026749999999999999,0.026749999999999999,0.0035000000000000001,0.0035000000000000001,0.013857142857142856,0,0,0.01657142857142857,0.0089999999999999993,0.0089999999999999993,0.016399999999999998,0.0093749999999999997,0.0115,0.0060000000000000001,0.0072500000000000004,0.0071666666666666667,0.025250000000000002,0.025250000000000002,0,0.0080000000000000002,0.010999999999999999,0.012,0,0.0035000000000000001,0.0035000000000000001,0,0,0.0042500000000000003,0.0042500000000000003,0,0.0036666666666666666,0.0057499999999999999,0.0057499999999999999,0.00175,0.0023333333333333335,0,0.0024285714285714288,0.020250000000000001,0.0037499999999999999,0.0030000000000000001,0.0195,0,0,0.0016000000000000001,0.0048000000000000004,0,0,0,0.0040000000000000001,0.0040000000000000001,0.024666666666666667],"mode":"markers","text":["Champion: Akali <br>Set: Set 13 <br>Cost: 2 <br>Avg Win Rate: 0","Champion: Ambessa <br>Set: Set 13 <br>Cost: 4 <br>Avg Win Rate: 0.0014","Champion: Amumu <br>Set: Set 13 <br>Cost: 1 <br>Avg Win Rate: 0","Champion: Blitzcrank <br>Set: Set 13 <br>Cost: 1 <br>Avg Win Rate: 0","Champion: Blitzcrank <br>Set: Set 13 <br>Cost: 3 <br>Avg Win Rate: 0","Champion: Caitlyn <br>Set: Set 13 <br>Cost: 5 <br>Avg Win Rate: 0.003","Champion: Camille <br>Set: Set 13 <br>Cost: 5 <br>Avg Win Rate: 0.0267","Champion: Camille <br>Set: Set 13 <br>Cost: 2 <br>Avg Win Rate: 0.0267","Champion: Cassiopeia <br>Set: Set 13 <br>Cost: 2 <br>Avg Win Rate: 0.0035","Champion: Cassiopeia <br>Set: Set 13 <br>Cost: 3 <br>Avg Win Rate: 0.0035","Champion: Corki <br>Set: Set 13 <br>Cost: 4 <br>Avg Win Rate: 0.0139","Champion: Darius <br>Set: Set 13 <br>Cost: 1 <br>Avg Win Rate: 0","Champion: Draven <br>Set: Set 13 <br>Cost: 1 <br>Avg Win Rate: 0","Champion: Ekko <br>Set: Set 13 <br>Cost: 4 <br>Avg Win Rate: 0.0166","Champion: Elise <br>Set: Set 13 <br>Cost: 1 <br>Avg Win Rate: 0.009","Champion: Elise <br>Set: Set 13 <br>Cost: 4 <br>Avg Win Rate: 0.009","Champion: Ezreal <br>Set: Set 13 <br>Cost: 3 <br>Avg Win Rate: 0.0164","Champion: Gangplank <br>Set: Set 13 <br>Cost: 3 <br>Avg Win Rate: 0.0094","Champion: Garen <br>Set: Set 13 <br>Cost: 4 <br>Avg Win Rate: 0.0115","Champion: Heimerdinger <br>Set: Set 13 <br>Cost: 4 <br>Avg Win Rate: 0.006","Champion: Illaoi <br>Set: Set 13 <br>Cost: 4 <br>Avg Win Rate: 0.0073","Champion: Irelia <br>Set: Set 13 <br>Cost: 1 <br>Avg Win Rate: 0.0072","Champion: Jinx <br>Set: Set 13 <br>Cost: 3 <br>Avg Win Rate: 0.0253","Champion: Jinx <br>Set: Set 13 <br>Cost: 5 <br>Avg Win Rate: 0.0253","Champion: Kogmaw <br>Set: Set 13 <br>Cost: 3 <br>Avg Win Rate: 0","Champion: Leblanc <br>Set: Set 13 <br>Cost: 5 <br>Avg Win Rate: 0.008","Champion: Leona <br>Set: Set 13 <br>Cost: 2 <br>Avg Win Rate: 0.011","Champion: Lux <br>Set: Set 13 <br>Cost: 1 <br>Avg Win Rate: 0.012","Champion: Malzahar <br>Set: Set 13 <br>Cost: 5 <br>Avg Win Rate: 0","Champion: Mordekaiser <br>Set: Set 13 <br>Cost: 3 <br>Avg Win Rate: 0.0035","Champion: Mordekaiser <br>Set: Set 13 <br>Cost: 5 <br>Avg Win Rate: 0.0035","Champion: Morgana <br>Set: Set 13 <br>Cost: 5 <br>Avg Win Rate: 0","Champion: Morgana <br>Set: Set 13 <br>Cost: 1 <br>Avg Win Rate: 0","Champion: Nami <br>Set: Set 13 <br>Cost: 4 <br>Avg Win Rate: 0.0043","Champion: Nami <br>Set: Set 13 <br>Cost: 3 <br>Avg Win Rate: 0.0043","Champion: Nocturne <br>Set: Set 13 <br>Cost: 2 <br>Avg Win Rate: 0","Champion: Rell <br>Set: Set 13 <br>Cost: 2 <br>Avg Win Rate: 0.0037","Champion: Rumble <br>Set: Set 13 <br>Cost: 2 <br>Avg Win Rate: 0.0058","Champion: Rumble <br>Set: Set 13 <br>Cost: 5 <br>Avg Win Rate: 0.0058","Champion: Sett <br>Set: Set 13 <br>Cost: 2 <br>Avg Win Rate: 0.0018","Champion: Silco <br>Set: Set 13 <br>Cost: 4 <br>Avg Win Rate: 0.0023","Champion: Singed <br>Set: Set 13 <br>Cost: 1 <br>Avg Win Rate: 0","Champion: Swain <br>Set: Set 13 <br>Cost: 3 <br>Avg Win Rate: 0.0024","Champion: Tristana <br>Set: Set 13 <br>Cost: 2 <br>Avg Win Rate: 0.0203","Champion: Trundle <br>Set: Set 13 <br>Cost: 1 <br>Avg Win Rate: 0.0037","Champion: Twitch <br>Set: Set 13 <br>Cost: 1 <br>Avg Win Rate: 0.003","Champion: Urgot <br>Set: Set 13 <br>Cost: 2 <br>Avg Win Rate: 0.0195","Champion: Vex <br>Set: Set 13 <br>Cost: 3 <br>Avg Win Rate: 0","Champion: Vex <br>Set: Set 13 <br>Cost: 1 <br>Avg Win Rate: 0","Champion: Vi <br>Set: Set 13 <br>Cost: 4 <br>Avg Win Rate: 0.0016","Champion: Vladimir <br>Set: Set 13 <br>Cost: 2 <br>Avg Win Rate: 0.0048","Champion: Zeri <br>Set: Set 13 <br>Cost: 2 <br>Avg Win Rate: 0","Champion: Ziggs <br>Set: Set 13 <br>Cost: 1 <br>Avg Win Rate: 0","Champion: Ziggs <br>Set: Set 13 <br>Cost: 2 <br>Avg Win Rate: 0","Champion: Zoe <br>Set: Set 13 <br>Cost: 1 <br>Avg Win Rate: 0.004","Champion: Zoe <br>Set: Set 13 <br>Cost: 4 <br>Avg Win Rate: 0.004","Champion: Zyra <br>Set: Set 13 <br>Cost: 1 <br>Avg Win Rate: 0.0247"],"hoverinfo":["text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text","text"],"type":"scatter","name":"Set 13","marker":{"color":"rgba(141,160,203,1)","line":{"color":"rgba(141,160,203,1)"}},"textfont":{"color":"rgba(141,160,203,1)"},"error_y":{"color":"rgba(141,160,203,1)"},"error_x":{"color":"rgba(141,160,203,1)"},"line":{"color":"rgba(141,160,203,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+<div id="trait-level-win-rate-summary" class="section level2"
+number="1.2">
+<h2><span class="header-section-number">1.2</span> Trait-Level Win Rate
+Summary</h2>
+<div class="datatables html-widget html-fill-item" id="htmlwidget-851f7ee8827e5da66ac2" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-851f7ee8827e5da66ac2">{"x":{"filter":"none","vertical":false,"caption":"<caption>Interactive Table: Trait-Level Win Rate Summary<\/caption>","data":[["Blaster","Dragon","Druid","Honeymancy","Portal","Frost","Vanguard","Arcana","Hunter","Shapeshifter","Sugarcraft","Preserver","Ravenous","Witchcraft","Bastion","Incantor","Pyro","Eldritch","Chrono","Experiment","Ascendant","Ambusher","Warrior","Scrap","Multistriker","Mage","Watcher","Faerie","Bruiser","Rebel","Scholar","Academy","Sorcerer","Sniper","Family"],[0.093,0.0805,0.075,0.0745,0.0745,0.0743,0.0738,0.0567,0.0558,0.0427,0.0375,0.0352,0.0347,0.0309,0.0276,0.0267,0.0252,0.024,0.0235,0.023,0.021,0.0193,0.0192,0.0165,0.0152,0.012,0.0115,0.0112,0.008399999999999999,0.0072,0.0063,0.006,0.004,0.0025,0],[0.5262,0.5495,0.734,0.5155,0.336,0.5953000000000001,0.4367,0.391,0.509,0.4044,0.4042,0.3778,0.334,0.3471,0.316,0.407,0.3078,0.341,0.3188,0.3793,0.319,0.2727,0.2601,0.2439,0.2592,0.134,0.1649,0.2588,0.1864,0.2718,0.1985,0.244,0.1558,0.1695,0.079],[5,2,1,2,4,3,10,3,4,8,8,13,3,8,8,3,5,1,8,3,1,6,9,11,6,2,8,4,10,6,4,1,6,6,1],["Set 12","Set 12","Set 12","Set 12","Set 12","Set 12","Set 12","Set 12","Set 12","Set 12","Set 12","Set 12","Set 12","Set 12","Set 12","Set 12","Set 12","Set 12","Set 12","Set 13","Set 12","Set 13","Set 12","Set 13","Set 12","Set 12","Set 13","Set 12","Set 13","Set 13","Set 12","Set 13","Set 13","Set 13","Set 13"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Trait<\/th>\n      <th>Avg Win Rate<\/th>\n      <th>Avg Top 4 Rate<\/th>\n      <th>Count<\/th>\n      <th>Set<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"pageLength":10,"scrollX":true,"columnDefs":[{"className":"dt-right","targets":[1,2,3]},{"name":"traits","targets":0},{"name":"avg_win_rate","targets":1},{"name":"avg_top4_rate","targets":2},{"name":"count","targets":3},{"name":"set","targets":4}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+</div>
+<div id="predicting-win-rate-stats-traits-and-models"
+class="section level2" number="1.3">
+<h2><span class="header-section-number">1.3</span> Predicting Win Rate:
+Stats, Traits, and Models</h2>
+<table class="table table-striped table-hover table-condensed" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Model Comparison: R², RMSE, AIC (if applicable)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Model_Type
+</th>
+<th style="text-align:left;">
+Set
+</th>
+<th style="text-align:left;">
+Input
+</th>
+<th style="text-align:right;">
+R2
+</th>
+<th style="text-align:right;">
+RMSE
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+LM
+</td>
+<td style="text-align:left;">
+Set 12
+</td>
+<td style="text-align:left;">
+Stats only
+</td>
+<td style="text-align:right;">
+0.0415
+</td>
+<td style="text-align:right;">
+0.0578
+</td>
+<td style="text-align:right;">
+-589.4084
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LM
+</td>
+<td style="text-align:left;">
+Set 12
+</td>
+<td style="text-align:left;">
+Traits only
+</td>
+<td style="text-align:right;">
+1.0000
+</td>
+<td style="text-align:right;">
+0.0000
+</td>
+<td style="text-align:right;">
+-14690.2538
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LM
+</td>
+<td style="text-align:left;">
+Set 12
+</td>
+<td style="text-align:left;">
+Both
+</td>
+<td style="text-align:right;">
+1.0000
+</td>
+<td style="text-align:right;">
+0.0000
+</td>
+<td style="text-align:right;">
+-14690.2538
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LM
+</td>
+<td style="text-align:left;">
+Set 13
+</td>
+<td style="text-align:left;">
+Stats only
+</td>
+<td style="text-align:right;">
+-0.0094
+</td>
+<td style="text-align:right;">
+0.0165
+</td>
+<td style="text-align:right;">
+-934.0546
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LM
+</td>
+<td style="text-align:left;">
+Set 13
+</td>
+<td style="text-align:left;">
+Traits only
+</td>
+<td style="text-align:right;">
+1.0000
+</td>
+<td style="text-align:right;">
+0.0000
+</td>
+<td style="text-align:right;">
+-12722.2031
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+LM
+</td>
+<td style="text-align:left;">
+Set 13
+</td>
+<td style="text-align:left;">
+Both
+</td>
+<td style="text-align:right;">
+1.0000
+</td>
+<td style="text-align:right;">
+0.0000
+</td>
+<td style="text-align:right;">
+-12722.2031
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GAM
+</td>
+<td style="text-align:left;">
+Set 12
+</td>
+<td style="text-align:left;">
+Stats only
+</td>
+<td style="text-align:right;">
+0.0415
+</td>
+<td style="text-align:right;">
+0.0578
+</td>
+<td style="text-align:right;">
+-589.4084
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GAM
+</td>
+<td style="text-align:left;">
+Set 12
+</td>
+<td style="text-align:left;">
+Traits only
+</td>
+<td style="text-align:right;">
+0.1064
+</td>
+<td style="text-align:right;">
+0.0527
+</td>
+<td style="text-align:right;">
+-583.9708
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GAM
+</td>
+<td style="text-align:left;">
+Set 12
+</td>
+<td style="text-align:left;">
+Both
+</td>
+<td style="text-align:right;">
+0.0912
+</td>
+<td style="text-align:right;">
+0.0526
+</td>
+<td style="text-align:right;">
+-577.0607
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GAM
+</td>
+<td style="text-align:left;">
+Set 13
+</td>
+<td style="text-align:left;">
+Stats only
+</td>
+<td style="text-align:right;">
+0.0025
+</td>
+<td style="text-align:right;">
+0.0163
+</td>
+<td style="text-align:right;">
+-935.1633
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GAM
+</td>
+<td style="text-align:left;">
+Set 13
+</td>
+<td style="text-align:left;">
+Traits only
+</td>
+<td style="text-align:right;">
+0.0415
+</td>
+<td style="text-align:right;">
+0.0151
+</td>
+<td style="text-align:right;">
+-925.0469
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GAM
+</td>
+<td style="text-align:left;">
+Set 13
+</td>
+<td style="text-align:left;">
+Both
+</td>
+<td style="text-align:right;">
+0.0158
+</td>
+<td style="text-align:right;">
+0.0151
+</td>
+<td style="text-align:right;">
+-917.1122
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RF
+</td>
+<td style="text-align:left;">
+Set 12
+</td>
+<td style="text-align:left;">
+Stats only
+</td>
+<td style="text-align:right;">
+-0.1689
+</td>
+<td style="text-align:right;">
+0.0645
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RF
+</td>
+<td style="text-align:left;">
+Set 12
+</td>
+<td style="text-align:left;">
+Traits only
+</td>
+<td style="text-align:right;">
+0.3688
+</td>
+<td style="text-align:right;">
+0.0480
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RF
+</td>
+<td style="text-align:left;">
+Set 12
+</td>
+<td style="text-align:left;">
+Both
+</td>
+<td style="text-align:right;">
+0.2899
+</td>
+<td style="text-align:right;">
+0.0510
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RF
+</td>
+<td style="text-align:left;">
+Set 13
+</td>
+<td style="text-align:left;">
+Stats only
+</td>
+<td style="text-align:right;">
+-0.1477
+</td>
+<td style="text-align:right;">
+0.0178
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RF
+</td>
+<td style="text-align:left;">
+Set 13
+</td>
+<td style="text-align:left;">
+Traits only
+</td>
+<td style="text-align:right;">
+0.3717
+</td>
+<td style="text-align:right;">
+0.0133
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RF
+</td>
+<td style="text-align:left;">
+Set 13
+</td>
+<td style="text-align:left;">
+Both
+</td>
+<td style="text-align:right;">
+0.3620
+</td>
+<td style="text-align:right;">
+0.0135
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+</tbody>
+</table>
+<p>Random Forest with traits only is the best model overall because it
+has the highest R^2 and lowest RMSE across both sets, indicating strong
+predictive performance. Linear models likely overfit, as shown by
+perfect R^2 and zero RMSE, while GAMs perform worse in both R² and RMSE
+without gains in AIC. Traits only outperforms stats only and both
+combined, likely because stats add noise or redundant information.</p>
+</div>
+<div id="trait-importance-analysis" class="section level2" number="1.4">
+<h2><span class="header-section-number">1.4</span> Trait Importance
+Analysis</h2>
+<p><img src="trait_summary_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
+<p>From the figure above, the best traits for Set 12 are Vanguard,
+Blaster and Honeymancy, while the best traits for Set 13 are
+Artillerist, Ambusher and Experiment.</p>
+</div>
+</div>
+<div id="summary" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Summary</h1>
+<p>This project examined how champion stats, traits, and design shifts
+between Set 12 and Set 13 in <em>Teamfight Tactics</em> (TFT) impact
+team performance, using thousands of real team compositions and multiple
+modeling approaches.</p>
+<div id="key-findings" class="section level3" number="2.0.1">
+<h3><span class="header-section-number">2.0.1</span> Key Findings</h3>
+<ul>
+<li><p><strong>Champion Stat Scaling</strong><br />
+In both sets, champion stats (Health, Damage, DPS) scale positively with
+cost and star level. Set 13 introduces a <strong>steeper scaling
+curve</strong>, largely due to the addition of <strong>6-cost
+champions</strong> who significantly outpace lower-cost units in raw
+stats. This supports the hypothesis that Set 13 expands the power curve
+substantially.</p></li>
+<li><p><strong>Normalized Stat Efficiency</strong><br />
+When adjusting for star-up cost, <strong>1-cost units deliver the
+highest value</strong>, with normalized Health, Damage, and DPS
+declining as cost increases. This confirms the second hypothesis:
+high-cost units are not necessarily the most efficient in terms of
+stat-to-cost ratio.</p></li>
+<li><p><strong>Stat Consistency Across Sets</strong><br />
+Stat progression across star levels is consistent between the two sets.
+This suggests that while overall power increased in Set 13 (due to new
+unit types), <strong>the underlying scaling formulas were
+preserved</strong>.</p></li>
+<li><p><strong>Trait Importance Over Stats</strong><br />
+Random Forest models consistently identified <strong>traits as stronger
+predictors</strong> of win rate and top 4 rate compared to raw stats.
+This reinforces the idea that <strong>synergy effects from traits
+dominate individual stat advantages</strong>, aligning with the fourth
+hypothesis.</p></li>
+<li><p><strong>Model Performance</strong><br />
+Among all models tested (LM, GAM, RF), <strong>Random Forest with
+trait-only inputs</strong> yielded the highest <span
+class="math inline">\(R^2\)</span> and lowest RMSE. This shows that
+nonlinear, interaction-heavy models are best suited to capture TFT’s
+complexity, supporting the final hypothesis.</p></li>
+<li><p><strong>Best Traits by Set</strong><br />
+Trait importance analysis revealed that top-performing traits differ
+across sets:</p>
+<ul>
+<li><em>Set 12</em>: Vanguard, Blaster, and Honeymancy were most
+impactful<br />
+</li>
+<li><em>Set 13</em>: Artillerist, Ambusher, and Experiment stood
+out</li>
+</ul></li>
+</ul>
+</div>
+<div id="overall-conclusion" class="section level3" number="2.0.2">
+<h3><span class="header-section-number">2.0.2</span> Overall
+Conclusion</h3>
+<p>The introduction of 6-cost units in Set 13 redefined the TFT metagame
+by raising power ceilings while preserving relative scaling rules.
+However, <strong>raw stats alone do not determine success</strong>.
+Instead, <strong>team synergy via traits</strong> remains the most
+reliable pathway to victory. Effective composition building relies not
+just on strong units, but on how well those units activate and
+complement each other’s traits.</p>
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

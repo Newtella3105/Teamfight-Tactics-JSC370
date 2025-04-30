@@ -1,0 +1,24 @@
+name: "tft-analysis"
+output_dir: "docs"
+
+navbar:
+  title: "TFT Champion & Trait Meta Analysis"
+  left:
+    - text: "Intro & Methods"
+      href: index.html
+    - text: "Champion Stats"
+      href: champ_stats.html
+    - text: "Trait Models & Summary"
+      href: trait_summary.html
+
+output:
+  html_document:
+    theme: cosmo
+    toc: true
+    toc_float: true
+    number_sections: true
+
+rmd_files:
+  - index.Rmd
+  - champ_stats.Rmd
+  - trait_summary.Rmd

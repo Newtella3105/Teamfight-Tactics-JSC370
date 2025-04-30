@@ -1,9 +1,15 @@
 ---
+title: "Teamfight Tactics Final Report"
 output:
+  pdf_document:
+    toc: true
+    number_sections: true
+    fig_caption: true
   html_document: default
   word_document: default
-  pdf_document: default
+  always_allow_html: true
 ---
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Install necessary packages (if not already installed)
 # install.packages(c("rvest", "tidyverse", "stringr", "purrr"))
@@ -11,9 +17,7 @@ output:
 # install.packages("plotly")
 # install.packages("kableExtra")
 # install.packages("randomForest")
-# install.packages("DT")
 
-library(plotly)
 library(GGally)
 library(rvest)
 library(tidyverse)
@@ -30,7 +34,6 @@ library(jsonlite)
 library(tibble)
 library(mgcv)
 library(randomForest)
-library(DT)
 ```
 
 # Github Link:
@@ -63,7 +66,7 @@ In TFT, eight players face off in a round-robin format. Each player assembles a 
 - **Player Level**: Determines how many units a player can deploy (max: 10) and affects odds of finding high-cost units in the shop.
 - **Combat Round**: A fight phase where units act automatically.
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, out.width="\\textwidth"}
 knitr::include_graphics("TFT.png")
 ```
 
@@ -160,9 +163,9 @@ variable_summary <- data.frame(
   )
 )
 
-kable(variable_summary, format = "html", caption = "Table 1: Summary of Key Variables Used in Analysis") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE) %>%
-  row_spec(0, bold = TRUE, color = "white", background = "#2C3E50")
+kable(variable_summary, format = "latex", caption = "Table 1: Summary of Key Variables Used in Analysis", booktabs = TRUE) %>%
+  kable_styling(latex_options = c("striped", "hold_position"), full_width = FALSE) %>%
+  row_spec(0, bold = TRUE)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
@@ -521,8 +524,8 @@ extract_all_champion_data_set13 <- function(champion_names) {
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Read the JSON files
-champion_info_set12 <- fromJSON("champion_info_set12.json")
-trait_info_set12 <- fromJSON("trait_info_set12.json")
+champion_info_set12 <- fromJSON("data/champion_info_set12.json")
+trait_info_set12 <- fromJSON("data/trait_info_set12.json")
 
 # Initialize all_data_set_12 as an empty data frame
 all_data_set12 <- list()
@@ -534,8 +537,8 @@ all_data_set12$trait_info <- trait_info_set12
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Read the JSON files
-champion_info_set13 <- fromJSON("champion_info_set13.json")
-trait_info_set13 <- fromJSON("trait_info_set13.json")
+champion_info_set13 <- fromJSON("data/champion_info_set13.json")
+trait_info_set13 <- fromJSON("data/trait_info_set13.json")
 
 # Initialize all_data_set_13 as an empty data frame
 all_data_set13 <- list()
@@ -841,35 +844,6 @@ ordered_by_damage_set12 <- averaged_champions_set12 %>%
     avg_dps = round(avg_dps, 1),
     avg_damage = round(avg_damage, 1)
   )
-
-# Create kable tables for Set 12
-kable_health_set12 <- kable(ordered_by_health_set12, 
-                          caption = "Set 12: Champions Ordered by Average Health",
-                          col.names = c("Cost", "Star Level", "Avg Health", "Avg DPS", "Avg Damage"),
-                          format = "html") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
-                full_width = FALSE) %>%
-  row_spec(0, bold = TRUE, color = "white", background = "#3498DB")
-
-kable_dps_set12 <- kable(ordered_by_dps_set12, 
-                       caption = "Set 12: Champions Ordered by Average DPS",
-                       col.names = c("Cost", "Star Level", "Avg Health", "Avg DPS", "Avg Damage"),
-                       format = "html") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
-                full_width = FALSE) %>%
-  row_spec(0, bold = TRUE, color = "white", background = "#3498DB")
-
-kable_damage_set12 <- kable(ordered_by_damage_set12, 
-                          caption = "Set 12: Champions Ordered by Average Damage",
-                          col.names = c("Cost", "Star Level", "Avg Health", "Avg DPS", "Avg Damage"),
-                          format = "html") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
-                full_width = FALSE) %>%
-  row_spec(0, bold = TRUE, color = "white", background = "#3498DB")
-
-# print(kable_health_set12)
-# print(kable_dps_set12)
-# print(kable_damage_set12)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
@@ -935,38 +909,9 @@ ordered_by_damage_set13 <- averaged_champions_set13 %>%
     avg_dps = round(avg_dps, 1),
     avg_damage = round(avg_damage, 1)
   )
-
-# Create kable tables for Set 13
-kable_health_set13 <- kable(ordered_by_health_set13, 
-                          caption = "Set 13: Champions Ordered by Average Health",
-                          col.names = c("Cost", "Star Level", "Avg Health", "Avg DPS", "Avg Damage"),
-                          format = "html") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
-                full_width = FALSE) %>%
-  row_spec(0, bold = TRUE, color = "white", background = "#E74C3C")
-
-kable_dps_set13 <- kable(ordered_by_dps_set13, 
-                       caption = "Set 13: Champions Ordered by Average DPS",
-                       col.names = c("Cost", "Star Level", "Avg Health", "Avg DPS", "Avg Damage"),
-                       format = "html") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
-                full_width = FALSE) %>%
-  row_spec(0, bold = TRUE, color = "white", background = "#E74C3C")
-
-kable_damage_set13 <- kable(ordered_by_damage_set13, 
-                          caption = "Set 13: Champions Ordered by Average Damage",
-                          col.names = c("Cost", "Star Level", "Avg Health", "Avg DPS", "Avg Damage"),
-                          format = "html") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
-                full_width = FALSE) %>%
-  row_spec(0, bold = TRUE, color = "white", background = "#E74C3C")
-
-# print(kable_health_set13)
-# print(kable_dps_set13)
-# print(kable_damage_set13)
 ```
 
-## Set 12: stats by Cost and Star Level
+## Set 12: Stats by Cost and Star Level
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=12}
 #############################################
@@ -1001,7 +946,7 @@ grid.arrange(set12_health_scatter, set12_damage_scatter, set12_dps_scatter, ncol
 
 There is a clear trend across all star levels: as the cost increases, all three stats (Health, Damage, and DPS) increase noticeably.
 
-## Set 13: stats by Cost and Star Level
+## Set 13: Stats by Cost and Star Level
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=12}
 #############################################
@@ -1212,7 +1157,7 @@ For these charts, stats are normalized by cost, where 1-star units are worth the
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10}
 #############################################
-# Normalized Stats Comparison Visualizations
+# Normalized stats Comparison Visualizations
 #############################################
 
 # Comparison of normalized Health
@@ -1334,7 +1279,7 @@ The following interactive visualizations explore:
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 #############################################
-# Scatterplot: Cost vs Win Rate
+# Static Scatterplot: Cost vs Win Rate
 #############################################
 
 # Combine champion summaries
@@ -1355,33 +1300,23 @@ cost_lookup <- bind_rows(arranged_champions_set12, arranged_champions_set13) %>%
 scatter_data <- scatter_data %>%
   left_join(cost_lookup, by = c("champions" = "champion"))
 
-# Interactive Plot
-plot_ly(
-  data = scatter_data,
-  x = ~cost,
-  y = ~avg_win_rate,
-  type = "scatter",
-  mode = "markers",
-  color = ~set,
-  text = ~paste("Champion:", champions,
-                "<br>Set:", set,
-                "<br>Cost:", cost,
-                "<br>Avg Win Rate:", round(avg_win_rate, 4)),
-  hoverinfo = "text"
-) %>%
-  layout(
+# Static scatter plot
+ggplot(scatter_data, aes(x = as.factor(cost), y = avg_win_rate, color = set)) +
+  geom_jitter(width = 0.2, height = 0, size = 2.5, alpha = 0.8) +
+  labs(
     title = "Champion Win Rate vs Cost",
-    xaxis = list(title = "Champion Cost"),
-    yaxis = list(title = "Average Win Rate"),
-    legend = list(title = list(text = "<b>Set</b>"))
-  )
+    x = "Champion Cost",
+    y = "Average Win Rate",
+    color = "Set"
+  ) +
+  theme_minimal()
 ```
 
 ## Trait-Level Win Rate Summary
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 #############################################
-# Trait Win Rate Table (Set 12 & 13)
+# Static Table: Trait Win Rate Summary
 #############################################
 
 # Combine both trait name lists
@@ -1401,14 +1336,15 @@ trait_table_data <- bind_rows(
   ) %>%
   arrange(desc(avg_win_rate))
 
-# Display the interactive table
-datatable(
+# Display static table for PDF
+kable(
   trait_table_data,
-  options = list(pageLength = 10, scrollX = TRUE),
-  rownames = FALSE,
-  colnames = c("Trait", "Avg Win Rate", "Avg Top 4 Rate", "Count", "Set"),
-  caption = "Interactive Table: Trait-Level Win Rate Summary"
-)
+  format = "latex",
+  caption = "Table: Trait-Level Win Rate Summary",
+  col.names = c("Trait", "Avg Win Rate", "Avg Top 4 Rate", "Count", "Set"),
+  booktabs = TRUE
+) %>%
+  kable_styling(latex_options = c("striped", "hold_position"))
 ```
 
 ## Predicting Win Rate: Stats, Traits, and Models
@@ -1671,8 +1607,8 @@ model_comparison <- tibble::tibble(
 )
 
 # Display
-knitr::kable(model_comparison, digits = 4, format = "html", caption = "Model Comparison: R², RMSE, AIC (if applicable)") %>%
-  kableExtra::kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+kable(model_comparison, digits = 4, format = "latex", caption = "Model Comparison: R², RMSE, AIC (if applicable)", booktabs = TRUE) %>%
+  kable_styling(latex_options = c("striped", "hold_position"), full_width = FALSE)
 ```
 
 Random Forest with traits only is the best model overall because it has the highest R^2 and lowest RMSE across both sets, indicating strong predictive performance. Linear models likely overfit, as shown by perfect R^2 and zero RMSE, while GAMs perform worse in both R² and RMSE without gains in AIC. Traits only outperforms stats only and both combined, likely because stats add noise or redundant information.

@@ -1,0 +1,1200 @@
+---
+title: "Champion Stats Analysis"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+---
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Install necessary packages (if not already installed)
+# install.packages(c("rvest", "tidyverse", "stringr", "purrr"))
+# install.packages("GGally")
+# install.packages("plotly")
+# install.packages("kableExtra")
+# install.packages("randomForest")
+# install.packages("DT")
+
+library(plotly)
+library(GGally)
+library(rvest)
+library(tidyverse)
+library(dplyr)
+library(purrr)
+library(stringr)
+library(jsonlite)
+library(kableExtra)
+library(tidyr)
+library(ggplot2)
+library(knitr)
+library(gridExtra)
+library(jsonlite)
+library(tibble)
+library(mgcv)
+library(randomForest)
+library(DT)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# SET 12 - Wayback Machine Archive Data
+#############################################
+
+# Define the TFTTactics.gg Champions URL for Set 12
+url_tfttactics_set12 <- "https://web.archive.org/web/20240927225144/https://tftactics.gg/champions/"
+page_tfttactics_set12 <- read_html(url_tfttactics_set12)
+
+# Extract champion names for Set 12
+champion_names_set12 <- page_tfttactics_set12 %>%
+  html_nodes(".character-name") %>% 
+  html_text(trim = TRUE)
+
+# Extract trait names (global list) for Set 12
+trait_names_set12 <- page_tfttactics_set12 %>%
+  html_nodes(".dropdown-item img") %>%
+  html_attr("alt") 
+
+# Initialize the tibbles with proper column names for Set 12
+champion_info_set12 <- tibble(
+  champion = character(),
+  stats = list(),
+  abilities = list(),
+  traits = list(),
+  trait_breakpoints = list()
+)
+
+trait_info_set12 <- tibble(
+  champion = character(),
+  trait_name = character(),
+  trait_type = character(),
+  trait_description = character()
+)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# SET 13 - Wayback Machine Archive Data
+#############################################
+
+# Define the TFTTactics.gg Champions URL for Set 13
+url_tfttactics_set13 <- "https://web.archive.org/web/20250114220710/https://tftactics.gg/champions/"
+page_tfttactics_set13 <- read_html(url_tfttactics_set13)
+
+# Extract champion names for Set 13
+champion_names_set13 <- page_tfttactics_set13 %>%
+  html_nodes(".character-name") %>% 
+  html_text(trim = TRUE)
+
+# Extract trait names (global list) for Set 13
+trait_names_set13 <- page_tfttactics_set13 %>%
+  html_nodes(".dropdown-item img") %>%
+  html_attr("alt") 
+
+# Initialize the tibbles with proper column names for Set 13
+champion_info_set13 <- tibble(
+  champion = character(),
+  stats = list(),
+  abilities = list(),
+  traits = list(),
+  trait_breakpoints = list()
+)
+
+trait_info_set13 <- tibble(
+  champion = character(),
+  trait_name = character(),
+  trait_type = character(),
+  trait_description = character()
+)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Common Functions (Used for both sets)
+#############################################
+
+# Function to safely read the page with error handling
+safe_read_html <- function(url) {
+  tryCatch(
+    {
+      read_html(url)
+    },
+    error = function(e) {
+      message("Error reading URL: ", url)
+      message("Error: ", e$message)
+      NULL
+    }
+  )
+}
+
+# Function to extract champion data using regex patterns
+extract_champion_data <- function(page, trait_names) {
+  # Get raw HTML text
+  raw_text <- page %>% html_text()
+  
+  # Extract champion name from the title
+  champion_name <- page %>% 
+    html_node("title") %>% 
+    html_text() %>% 
+    str_extract("^[^·]+") %>% 
+    str_trim()
+  
+  # stats EXTRACTION
+  stats <- tibble(stat = character(), value = character())
+  stat_patterns <- list(
+    "Cost" = "Cost:\\s*(\\d+)",
+    "Health" = "Health:\\s*([\\d\\s\\/]+)",
+    "Mana" = "Mana:\\s*(\\d+)",
+    "Armor" = "Armor:\\s*(\\d+)",
+    "MR" = "MR:\\s*(\\d+)",
+    "DPS" = "DPS:\\s*([\\d\\s\\/]+)",
+    "Damage" = "Damage:\\s*([\\d\\s\\/]+)",
+    "Atk Spd" = "Atk Spd:\\s*([\\d\\.]+)",
+    "Crit Rate" = "Crit Rate:\\s*([\\d\\.%]+)",
+    "Range" = "Range:\\s*(\\d+)"
+  )
+  
+  for (stat_name in names(stat_patterns)) {
+    value <- str_extract(raw_text, stat_patterns[[stat_name]])
+    if (!is.na(value)) {
+      clean_value <- str_replace(value, paste0(stat_name, ":\\s*"), "") %>% str_trim()
+      stats <- stats %>% add_row(stat = stat_name, value = clean_value)
+    }
+  }
+  
+  # ABILITIES EXTRACTION
+  ability_section <- str_extract(raw_text, "Abilities(.+?)(?=[A-Z][a-z]+(?:Origin|Class)|Synergies|Privacy Policy)")
+  ability_name <- str_extract(ability_section, "(?<=Abilities)\\s*([A-Za-z\\s]+?)(?=Active|Passive)") %>% str_trim()
+  ability_type <- str_extract(ability_section, "(Active|Passive)")
+  ability_mana <- str_extract(ability_section, "\\d+\\s*\\/\\s*\\d+")
+
+  abilities <- tibble(
+    name = ability_name,
+    type = ability_type,
+    mana = ability_mana,
+    description = NA_character_
+  )
+
+  # TRAITS EXTRACTION
+  champion_traits <- character()
+  for (trait in trait_names) {
+    if (str_detect(raw_text, fixed(trait))) {
+      champion_traits <- c(champion_traits, trait)
+    }
+  }
+
+  traits <- tibble(name = character(), type = character(), description = character())
+  trait_breakpoints <- tibble(trait_name = character(), breakpoint_value = character(), breakpoint_description = character())
+
+  for (trait_name in champion_traits) {
+    next_traits <- setdiff(trait_names, trait_name)
+    next_part <- if (length(next_traits) > 0) paste(next_traits, collapse = "|") else ""
+
+    end_pattern <- if (nchar(next_part) > 0) {
+      paste0("(?=", next_part, "|Synergies)")
+    } else {
+      "(?=Synergies)"
+    }
+
+    trait_pattern <- paste0(trait_name, "(.+?)", end_pattern)
+    trait_section <- str_extract(raw_text, trait_pattern)
+
+    if (!is.na(trait_section)) {
+      trait_type <- str_extract(trait_section, "(Origin|Class)")
+
+      desc_pattern <- paste0("(?<=", trait_type, ")\\s*(.+?)(?=(", 
+                             if(nchar(next_part) > 0) paste0(next_part, "|") else "", 
+                             "Synergies|\\d+%|\\d+\\s*AD))")
+
+      trait_desc <- str_extract(trait_section, desc_pattern) %>% str_trim()
+
+      traits <- traits %>% add_row(
+        name = trait_name,
+        type = trait_type,
+        description = trait_desc
+      )
+
+      breakpoint_pattern <- "(\\d+)(.+?)(?=\\d+|$)"
+      breakpoint_matches <- str_extract_all(trait_section, breakpoint_pattern)[[1]]
+      for (match in breakpoint_matches) {
+        bp_value <- str_extract(match, "^\\d+") %>% str_trim()
+        bp_desc <- str_replace(match, "^\\d+", "") %>% str_trim()
+        trait_breakpoints <- trait_breakpoints %>% add_row(
+          trait_name = trait_name,
+          breakpoint_value = bp_value,
+          breakpoint_description = bp_desc
+        )
+      }
+    }
+  }
+
+  return(list(
+    champion = champion_name,
+    stats = stats,
+    abilities = abilities,
+    traits = traits,
+    trait_breakpoints = trait_breakpoints
+  ))
+}
+
+# Function to extract champion stats for analysis
+extract_champion_stats <- function(champion_name, stats_tibble) {
+  # Extract Cost, Health, DPS, and Damage stats
+  cost <- stats_tibble %>% filter(stat == "Cost") %>% pull(value) %>% as.numeric()
+  health <- stats_tibble %>% filter(stat == "Health") %>% pull(value)
+  dps <- stats_tibble %>% filter(stat == "DPS") %>% pull(value)
+  damage <- stats_tibble %>% filter(stat == "Damage") %>% pull(value)
+  
+  # Split the health, dps, and damage values by " / " to separate star levels
+  health_values <- as.numeric(strsplit(health, " / ")[[1]])
+  dps_values <- as.numeric(strsplit(dps, " / ")[[1]])
+  damage_values <- as.numeric(strsplit(damage, " / ")[[1]])
+
+  # Ensure that the number of values for health, dps, and damage match across star levels
+  if (length(health_values) != length(dps_values) | length(dps_values) != length(damage_values)) {
+    stop("Mismatch in the number of star levels for health, dps, and damage.")
+  }
+  
+  # Create a tibble with the expanded stats
+  stats_df <- tibble(
+    champion = rep(champion_name, length(health_values)),
+    star_level = 1:length(health_values),
+    cost = rep(cost, length(health_values)),
+    health = health_values,
+    dps = dps_values,
+    damage = damage_values
+  )
+  
+  return(stats_df)
+}
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# SET 12 - Extract All Champion Data
+#############################################
+
+extract_all_champion_data_set12 <- function(champion_names) {
+  # Reset global variables
+  champion_info_set12 <<- tibble(
+    champion = character(),
+    stats = list(),
+    abilities = list(),
+    traits = list(),
+    trait_breakpoints = list()
+  )
+
+  trait_info_set12 <<- tibble(
+    champion = character(),
+    trait_name = character(),
+    trait_type = character(),
+    trait_description = character()
+  )
+
+  base_url <- "https://web.archive.org/web/20240927225144/https://tftactics.gg/champions/"
+
+  for (champion_name in champion_names) {
+    champion_url <- paste0(base_url, gsub(" ", "_", champion_name), "/")
+    champion_page <- safe_read_html(champion_url)
+
+    if (is.null(champion_page)) {
+      next
+    }
+
+    champion_data <- extract_champion_data(champion_page, trait_names_set12)
+
+    champion_info_set12 <<- champion_info_set12 %>% add_row(
+      champion = champion_data$champion,
+      stats = list(champion_data$stats),
+      abilities = list(champion_data$abilities),
+      traits = list(champion_data$traits),
+      trait_breakpoints = list(champion_data$trait_breakpoints)
+    )
+
+    for (trait in champion_data$traits$name) {
+      trait_info_set12 <<- trait_info_set12 %>% add_row(
+        champion = champion_data$champion,
+        trait_name = trait,
+        trait_type = champion_data$traits$type[champion_data$traits$name == trait],
+        trait_description = champion_data$traits$description[champion_data$traits$name == trait]
+      )
+    }
+  }
+
+  return(list(champion_info = champion_info_set12, trait_info = trait_info_set12))
+}
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# SET 13 - Extract All Champion Data
+#############################################
+
+extract_all_champion_data_set13 <- function(champion_names) {
+  # Reset global variables
+  champion_info_set13 <<- tibble(
+    champion = character(),
+    stats = list(),
+    abilities = list(),
+    traits = list(),
+    trait_breakpoints = list()
+  )
+
+  trait_info_set13 <<- tibble(
+    champion = character(),
+    trait_name = character(),
+    trait_type = character(),
+    trait_description = character()
+  )
+
+  base_url <- "https://tftactics.gg/champions/"
+
+  for (champion_name in champion_names) {
+    champion_url <- paste0(base_url, gsub(" ", "_", champion_name), "/")
+    champion_page <- safe_read_html(champion_url)
+
+    if (is.null(champion_page)) {
+      next
+    }
+
+    champion_data <- extract_champion_data(champion_page, trait_names_set13)
+
+    champion_info_set13 <<- champion_info_set13 %>% add_row(
+      champion = champion_data$champion,
+      stats = list(champion_data$stats),
+      abilities = list(champion_data$abilities),
+      traits = list(champion_data$traits),
+      trait_breakpoints = list(champion_data$trait_breakpoints)
+    )
+
+    for (trait in champion_data$traits$name) {
+      trait_info_set13 <<- trait_info_set13 %>% add_row(
+        champion = champion_data$champion,
+        trait_name = trait,
+        trait_type = champion_data$traits$type[champion_data$traits$name == trait],
+        trait_description = champion_data$traits$description[champion_data$traits$name == trait]
+      )
+    }
+  }
+
+  return(list(champion_info = champion_info_set13, trait_info = trait_info_set13))
+}
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Extract Data for Both Sets
+#############################################
+# Extract data for both sets
+# all_data_set12 <- extract_all_champion_data_set12(champion_names_set12)
+# all_data_set13 <- extract_all_champion_data_set13(champion_names_set13)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Read the JSON files
+champion_info_set12 <- fromJSON("data/champion_info_set12.json")
+trait_info_set12 <- fromJSON("data/trait_info_set12.json")
+
+# Initialize all_data_set_12 as an empty data frame
+all_data_set12 <- list()
+
+# Add the JSON data as columns to the new data frame
+all_data_set12$champion_info <- champion_info_set12
+all_data_set12$trait_info <- trait_info_set12
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Read the JSON files
+champion_info_set13 <- fromJSON("data/champion_info_set13.json")
+trait_info_set13 <- fromJSON("data/trait_info_set13.json")
+
+# Initialize all_data_set_13 as an empty data frame
+all_data_set13 <- list()
+
+# Add the JSON data as columns to the new data frame
+all_data_set13$champion_info <- champion_info_set13
+all_data_set13$trait_info <- trait_info_set13
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Process Data for Both Sets
+#############################################
+# Clean champion names for Set 12
+all_data_set12$trait_info <- all_data_set12$trait_info %>%
+  mutate(champion = str_remove_all(champion, "TFT | Guide")) %>%
+  filter(!(trait_name == "Portal" & is.na(trait_type)))
+
+all_data_set12$champion_info <- all_data_set12$champion_info %>%
+  mutate(champion = str_remove_all(champion, "TFT | Guide"))
+
+# Clean champion names for Set 13
+all_data_set13$trait_info <- all_data_set13$trait_info %>%
+  mutate(champion = str_remove_all(champion, "TFT | Guide"))
+
+all_data_set13$champion_info <- all_data_set13$champion_info %>%
+  mutate(champion = str_remove_all(champion, "TFT | Guide"))
+
+# print(all_data_set12$trait_info)
+# print(all_data_set12$champion_info)
+# print(all_data_set13$trait_info)
+# print(all_data_set13$champion_info)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# SET 12 - Extract All Winrate Data
+#############################################
+
+# Read JSON
+url_set12 <- "https://web.archive.org/web/20240917151936/https://tftactics-data.kda.gg/meta/report"
+report_data_set12 <- fromJSON(url_set12)
+
+# Go to the summary-section
+summary_section_set12 <- report_data_set12$data$`summary-section`
+
+# Helper function to clean a single name
+clean_champion_name_set12 <- function(x) {
+  x <- gsub("^[0-9]-", "", x)
+  x <- gsub("^tft12_", "", x)
+  x <- gsub("-[0-9]+$", "", x)
+  x <- tolower(x)
+  x <- gsub("_", " ", x)
+  x <- tools::toTitleCase(x)
+  x
+}
+
+# Build the dataframe
+comp_df_set12 <- tibble(
+  win_rate = summary_section_set12$win_rate,
+  top4_rate = summary_section_set12$top4_rate,
+  champions = sapply(summary_section_set12$composition, function(champs_vec) {
+    cleaned_champions <- sapply(champs_vec, clean_champion_name_set12)
+    paste(cleaned_champions, collapse = ", ")
+  })
+)
+
+# Separate Champions from Traits
+comp_df_clean_set12 <- comp_df_set12 %>%
+  mutate(champions = str_split(champions, ",\\s*")) %>%
+  rowwise() %>%
+  mutate(
+    champions_list = list(champions[champions %in% champion_names_set12]),
+    traits_list = list(champions[!(champions %in% champion_names_set12)])
+  ) %>%
+  ungroup() %>%
+  mutate(
+    champions = sapply(champions_list, function(x) paste(x, collapse = ", ")),
+    traits = sapply(traits_list, function(x) paste(x, collapse = ", "))
+  ) %>%
+  select(win_rate, top4_rate, champions, traits)
+
+# print(comp_df_clean_set12)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# SET 13 - Extract All Winrate Data
+#############################################
+
+# Download compressed file
+temp_file_set13 <- tempfile(fileext = ".gz")
+download.file(
+  url = "https://web.archive.org/web/20250113142238/https://tftactics-data.kda.gg/meta/report",
+  destfile = temp_file_set13,
+  mode = "wb"
+)
+
+# Decompress using gzcon
+con_set13 <- gzcon(file(temp_file_set13, "rb"))
+text_set13 <- readLines(con_set13, warn = FALSE)
+close(con_set13)
+
+# Parse the text as JSON
+report_data_set13 <- fromJSON(paste(text_set13, collapse = ""))
+
+# Go to the summary-section
+summary_section_set13 <- report_data_set13$data$`summary-section`
+
+# Helper function to clean a single name
+clean_champion_name_set13 <- function(x) {
+  x <- gsub("^[0-9]-", "", x)
+  x <- gsub("^tft13_", "", x)
+  x <- gsub("-[0-9]+$", "", x)
+  x <- tolower(x)
+  x <- gsub("_", " ", x)
+  x <- tools::toTitleCase(x)
+  x
+}
+
+# Build the dataframe
+comp_df_set13 <- tibble(
+  win_rate = summary_section_set13$win_rate,
+  top4_rate = summary_section_set13$top4_rate,
+  champions = sapply(summary_section_set13$composition, function(champs_vec) {
+    cleaned_champions <- sapply(champs_vec, clean_champion_name_set13)
+    paste(cleaned_champions, collapse = ", ")
+  })
+)
+
+# Separate Champions from Traits
+comp_df_clean_set13 <- comp_df_set13 %>%
+  mutate(champions = str_split(champions, ",\\s*")) %>%
+  rowwise() %>%
+  mutate(
+    champions_list = list(champions[champions %in% champion_names_set13]),
+    traits_list = list(champions[!(champions %in% champion_names_set13)])
+  ) %>%
+  ungroup() %>%
+  mutate(
+    champions = sapply(champions_list, function(x) paste(x, collapse = ", ")),
+    traits = sapply(traits_list, function(x) paste(x, collapse = ", "))
+  ) %>%
+  select(win_rate, top4_rate, champions, traits)
+
+# print(comp_df_clean_set13)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Analyze Set 12 and Set 13 Champion and Trait Stats
+#############################################
+
+# Explode champions and traits into separate rows
+
+# For Set 12 - explode champions
+comp_df_clean_set12_exploded <- comp_df_clean_set12 %>%
+  mutate(
+    champions = str_split(champions, ",\\s*")
+  ) %>%
+  unnest(champions) %>%
+  mutate(
+    champions = str_trim(champions)
+  )
+
+# For Set 13 - explode champions
+comp_df_clean_set13_exploded <- comp_df_clean_set13 %>%
+  mutate(
+    champions = str_split(champions, ",\\s*")
+  ) %>%
+  unnest(champions) %>%
+  mutate(
+    champions = str_trim(champions)
+  )
+
+# For Set 12 - explode traits
+comp_df_clean_set12_traits_exploded <- comp_df_clean_set12 %>%
+  mutate(
+    traits = str_split(traits, ",\\s*")
+  ) %>%
+  unnest(traits) %>%
+  mutate(
+    traits = str_trim(traits)
+  )
+
+# For Set 13 - explode traits
+comp_df_clean_set13_traits_exploded <- comp_df_clean_set13 %>%
+  mutate(
+    traits = str_split(traits, ",\\s*")
+  ) %>%
+  unnest(traits) %>%
+  mutate(
+    traits = str_trim(traits)
+  )
+
+# Summarize Champion Stats
+champion_summary_set12 <- comp_df_clean_set12_exploded %>%
+  group_by(champions) %>%
+  summarise(
+    avg_win_rate = mean(win_rate, na.rm = TRUE),
+    avg_top4_rate = mean(top4_rate, na.rm = TRUE),
+    count = n(),
+    .groups = "drop"
+  )
+
+champion_summary_set13 <- comp_df_clean_set13_exploded %>%
+  group_by(champions) %>%
+  summarise(
+    avg_win_rate = mean(win_rate, na.rm = TRUE),
+    avg_top4_rate = mean(top4_rate, na.rm = TRUE),
+    count = n(),
+    .groups = "drop"
+  )
+
+# Summarize Trait Stats
+trait_summary_set12 <- comp_df_clean_set12_traits_exploded %>%
+  group_by(traits) %>%
+  summarise(
+    avg_win_rate = mean(win_rate, na.rm = TRUE),
+    avg_top4_rate = mean(top4_rate, na.rm = TRUE),
+    count = n(),
+    .groups = "drop"
+  )
+
+trait_summary_set13 <- comp_df_clean_set13_traits_exploded %>%
+  group_by(traits) %>%
+  summarise(
+    avg_win_rate = mean(win_rate, na.rm = TRUE),
+    avg_top4_rate = mean(top4_rate, na.rm = TRUE),
+    count = n(),
+    .groups = "drop"
+  )
+
+# champion_summary_set12
+# champion_summary_set13
+# trait_summary_set12
+# trait_summary_set13
+```
+
+# Champion Stat Distribution (No Win Rate)
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Analyze Set 12 Champion stats
+#############################################
+
+# Prepare champion stats for analysis (Set 12)
+all_champion_stats_set12 <- bind_rows(
+  lapply(1:nrow(all_data_set12$champion_info), function(i) {
+    champion_name <- all_data_set12$champion_info$champion[i]
+    champion_stats <- all_data_set12$champion_info$stats[[i]]
+    
+    # Extract and combine stats
+    tryCatch({
+      extract_champion_stats(champion_name, champion_stats)
+    }, error = function(e) {
+      message(paste("Error processing champion:", champion_name))
+      message(e$message)
+      # return(NULL)
+    })
+  })
+)
+
+# Remove any NULL entries
+all_champion_stats_set12 <- all_champion_stats_set12 %>% filter(!is.na(champion))
+
+# Arrange champions by various attributes (Set 12)
+arranged_champions_set12 <- all_champion_stats_set12 %>%
+  arrange(champion, star_level, cost)
+
+# Compute averages for health, dps, and damage grouped by cost and star level (Set 12)
+averaged_champions_set12 <- arranged_champions_set12 %>%
+  group_by(cost, star_level) %>%
+  summarise(
+    avg_health = mean(health, na.rm = TRUE),
+    avg_dps = mean(dps, na.rm = TRUE),
+    avg_damage = mean(damage, na.rm = TRUE),
+    .groups = 'drop'  # Drop grouping after summarisation
+  )
+
+# Sort tables by different metrics (Set 12)
+ordered_by_health_set12 <- averaged_champions_set12 %>%
+  arrange(avg_health) %>%
+  mutate(
+    avg_health = round(avg_health, 1),
+    avg_dps = round(avg_dps, 1),
+    avg_damage = round(avg_damage, 1)
+  )
+
+ordered_by_dps_set12 <- averaged_champions_set12 %>%
+  arrange(avg_dps) %>%
+  mutate(
+    avg_health = round(avg_health, 1),
+    avg_dps = round(avg_dps, 1),
+    avg_damage = round(avg_damage, 1)
+  )
+
+ordered_by_damage_set12 <- averaged_champions_set12 %>%
+  arrange(avg_damage) %>%
+  mutate(
+    avg_health = round(avg_health, 1),
+    avg_dps = round(avg_dps, 1),
+    avg_damage = round(avg_damage, 1)
+  )
+
+# Create kable tables for Set 12
+kable_health_set12 <- kable(ordered_by_health_set12, 
+                          caption = "Set 12: Champions Ordered by Average Health",
+                          col.names = c("Cost", "Star Level", "Avg Health", "Avg DPS", "Avg Damage"),
+                          format = "html") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) %>%
+  row_spec(0, bold = TRUE, color = "white", background = "#3498DB")
+
+kable_dps_set12 <- kable(ordered_by_dps_set12, 
+                       caption = "Set 12: Champions Ordered by Average DPS",
+                       col.names = c("Cost", "Star Level", "Avg Health", "Avg DPS", "Avg Damage"),
+                       format = "html") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) %>%
+  row_spec(0, bold = TRUE, color = "white", background = "#3498DB")
+
+kable_damage_set12 <- kable(ordered_by_damage_set12, 
+                          caption = "Set 12: Champions Ordered by Average Damage",
+                          col.names = c("Cost", "Star Level", "Avg Health", "Avg DPS", "Avg Damage"),
+                          format = "html") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) %>%
+  row_spec(0, bold = TRUE, color = "white", background = "#3498DB")
+
+# print(kable_health_set12)
+# print(kable_dps_set12)
+# print(kable_damage_set12)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Analyze Set 13 Champion stats
+#############################################
+
+# Prepare champion stats for analysis (Set 13)
+all_champion_stats_set13 <- bind_rows(
+  lapply(1:nrow(all_data_set13$champion_info), function(i) {
+    champion_name <- all_data_set13$champion_info$champion[i]
+    champion_stats <- all_data_set13$champion_info$stats[[i]]
+    
+    # Extract and combine stats
+    tryCatch({
+      extract_champion_stats(champion_name, champion_stats)
+    }, error = function(e) {
+      message(paste("Error processing champion:", champion_name))
+      message(e$message)
+      # return(NULL)
+    })
+  })
+)
+
+# Remove any NULL entries
+all_champion_stats_set13 <- all_champion_stats_set13 %>% filter(!is.na(champion))
+
+# Arrange champions by various attributes (Set 13)
+arranged_champions_set13 <- all_champion_stats_set13 %>%
+  arrange(champion, star_level, cost)
+
+# Compute averages for health, dps, and damage grouped by cost and star level (Set 13)
+averaged_champions_set13 <- arranged_champions_set13 %>%
+  group_by(cost, star_level) %>%
+  summarise(
+    avg_health = mean(health, na.rm = TRUE),
+    avg_dps = mean(dps, na.rm = TRUE),
+    avg_damage = mean(damage, na.rm = TRUE),
+    .groups = 'drop'  # Drop grouping after summarisation
+  )
+
+# Sort tables by different metrics (Set 13)
+ordered_by_health_set13 <- averaged_champions_set13 %>%
+  arrange(avg_health) %>%
+  mutate(
+    avg_health = round(avg_health, 1),
+    avg_dps = round(avg_dps, 1),
+    avg_damage = round(avg_damage, 1)
+  )
+
+ordered_by_dps_set13 <- averaged_champions_set13 %>%
+  arrange(avg_dps) %>%
+  mutate(
+    avg_health = round(avg_health, 1),
+    avg_dps = round(avg_dps, 1),
+    avg_damage = round(avg_damage, 1)
+  )
+
+ordered_by_damage_set13 <- averaged_champions_set13 %>%
+  arrange(avg_damage) %>%
+  mutate(
+    avg_health = round(avg_health, 1),
+    avg_dps = round(avg_dps, 1),
+    avg_damage = round(avg_damage, 1)
+  )
+
+# Create kable tables for Set 13
+kable_health_set13 <- kable(ordered_by_health_set13, 
+                          caption = "Set 13: Champions Ordered by Average Health",
+                          col.names = c("Cost", "Star Level", "Avg Health", "Avg DPS", "Avg Damage"),
+                          format = "html") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) %>%
+  row_spec(0, bold = TRUE, color = "white", background = "#E74C3C")
+
+kable_dps_set13 <- kable(ordered_by_dps_set13, 
+                       caption = "Set 13: Champions Ordered by Average DPS",
+                       col.names = c("Cost", "Star Level", "Avg Health", "Avg DPS", "Avg Damage"),
+                       format = "html") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) %>%
+  row_spec(0, bold = TRUE, color = "white", background = "#E74C3C")
+
+kable_damage_set13 <- kable(ordered_by_damage_set13, 
+                          caption = "Set 13: Champions Ordered by Average Damage",
+                          col.names = c("Cost", "Star Level", "Avg Health", "Avg DPS", "Avg Damage"),
+                          format = "html") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) %>%
+  row_spec(0, bold = TRUE, color = "white", background = "#E74C3C")
+
+# print(kable_health_set13)
+# print(kable_dps_set13)
+# print(kable_damage_set13)
+```
+
+## Set 12: Stats by Cost and Star Level
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=12}
+#############################################
+# Create Interactive Visualizations for Set 12
+#############################################
+
+# Scatterplots for Set 12
+set12_health_scatter <- ggplot(arranged_champions_set12, aes(x = as.factor(cost), y = health, color = as.factor(star_level))) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", aes(group = as.factor(star_level)), se = FALSE) +
+  labs(title = "Health by Cost and Star Level", x = "Cost", y = "Health", color = "Star Level") +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1")
+
+set12_damage_scatter <- ggplot(arranged_champions_set12, aes(x = as.factor(cost), y = damage, color = as.factor(star_level))) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", aes(group = as.factor(star_level)), se = FALSE) +
+  labs(title = "Damage by Cost and Star Level", x = "Cost", y = "Damage", color = "Star Level") +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1")
+
+set12_dps_scatter <- ggplot(arranged_champions_set12, aes(x = as.factor(cost), y = dps, color = as.factor(star_level))) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", aes(group = as.factor(star_level)), se = FALSE) +
+  labs(title = "DPS by Cost and Star Level", x = "Cost", y = "DPS", color = "Star Level") +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1")
+
+# Display interactive plots separately
+plotly::ggplotly(set12_health_scatter)
+plotly::ggplotly(set12_damage_scatter)
+plotly::ggplotly(set12_dps_scatter)
+```
+
+There is a clear trend across all star levels: as the cost increases, all three stats (Health, Damage, and DPS) increase noticeably.
+
+## Set 13: Stats by Cost and Star Level
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=12}
+#############################################
+# Create Interactive Visualizations for Set 13
+#############################################
+
+# Scatterplots for Set 13
+set13_health_scatter <- ggplot(arranged_champions_set13, aes(x = as.factor(cost), y = health, color = as.factor(star_level))) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", aes(group = as.factor(star_level)), se = FALSE) +
+  labs(title = "Health by Cost and Star Level", x = "Cost", y = "Health", color = "Star Level") +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1")
+
+set13_damage_scatter <- ggplot(arranged_champions_set13, aes(x = as.factor(cost), y = damage, color = as.factor(star_level))) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", aes(group = as.factor(star_level)), se = FALSE) +
+  labs(title = "Damage by Cost and Star Level", x = "Cost", y = "Damage", color = "Star Level") +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1")
+
+set13_dps_scatter <- ggplot(arranged_champions_set13, aes(x = as.factor(cost), y = dps, color = as.factor(star_level))) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", aes(group = as.factor(star_level)), se = FALSE) +
+  labs(title = "DPS by Cost and Star Level", x = "Cost", y = "DPS", color = "Star Level") +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1")
+
+# Display interactive plots separately
+plotly::ggplotly(set13_health_scatter)
+plotly::ggplotly(set13_damage_scatter)
+plotly::ggplotly(set13_dps_scatter)
+```
+
+The trend for Set 13 is similar to that of Set 12, but the gradient is steeper and the maximum values are much higher. This is expected because Set 13 includes 6-cost champions, which are very rare and have exceptionally high stats to compensate for their high cost and rarity. An outlier is observed in the Damage and DPS graphs, where a 3-cost, 2-star unit has very low damage and DPS—possibly explained by its role as a tank with high health and low damage.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Side-by-Side Comparison - Creating Combined Dataset
+#############################################
+
+# Extract champion stats for Set 12
+all_champion_stats_set12 <- bind_rows(
+  lapply(1:nrow(all_data_set12$champion_info), function(i) {
+    champion_name <- all_data_set12$champion_info$champion[i]
+    champion_stats <- all_data_set12$champion_info$stats[[i]]
+    
+    tryCatch({
+      extract_champion_stats(champion_name, champion_stats)
+    }, error = function(e) {
+      message(paste("Error processing champion:", champion_name))
+      message(e$message)
+    })
+  })
+) %>% filter(!is.na(champion))
+
+# Extract champion stats for Set 13
+all_champion_stats_set13 <- bind_rows(
+  lapply(1:nrow(all_data_set13$champion_info), function(i) {
+    champion_name <- all_data_set13$champion_info$champion[i]
+    champion_stats <- all_data_set13$champion_info$stats[[i]]
+    
+    tryCatch({
+      extract_champion_stats(champion_name, champion_stats)
+    }, error = function(e) {
+      message(paste("Error processing champion:", champion_name))
+      message(e$message)
+    })
+  })
+) %>% filter(!is.na(champion))
+
+# Arrange champions for both sets
+arranged_champions_set12 <- all_champion_stats_set12 %>%
+  arrange(champion, star_level, cost)
+
+arranged_champions_set13 <- all_champion_stats_set13 %>%
+  arrange(champion, star_level, cost)
+
+# Calculate average stats by cost and star level for both sets
+averaged_champions_set12 <- arranged_champions_set12 %>%
+  group_by(cost, star_level) %>%
+  summarise(
+    avg_health = mean(health, na.rm = TRUE),
+    avg_dps = mean(dps, na.rm = TRUE),
+    avg_damage = mean(damage, na.rm = TRUE),
+    .groups = 'drop'
+  )
+
+averaged_champions_set13 <- arranged_champions_set13 %>%
+  group_by(cost, star_level) %>%
+  summarise(
+    avg_health = mean(health, na.rm = TRUE),
+    avg_dps = mean(dps, na.rm = TRUE),
+    avg_damage = mean(damage, na.rm = TRUE),
+    .groups = 'drop'
+  )
+
+# Create a combined dataset for comparison without merging based on keys
+set12_avg_summary <- averaged_champions_set12 %>%
+  mutate(set = "Set 12")
+
+set13_avg_summary <- averaged_champions_set13 %>%
+  mutate(set = "Set 13")
+
+# Bind the rows without merging or matching keys
+combined_sets <- bind_rows(set12_avg_summary, set13_avg_summary)
+```
+
+## Set 12 vs Set 13: Average stats Comparison by Cost and Star Level
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10}
+#############################################
+# Interactive Bar Chart Comparisons
+#############################################
+
+# Create comparison visualizations for health, DPS, and damage
+health_comparison <- ggplot(combined_sets, aes(x = as.factor(cost), y = avg_health, fill = set)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~star_level, nrow = 1, labeller = labeller(star_level = function(x) paste("★", x))) +
+  labs(title = "Average Health Comparison", x = "Cost", y = "Average Health") +
+  theme_minimal() +
+  theme(legend.title = element_blank())
+
+dps_comparison <- ggplot(combined_sets, aes(x = as.factor(cost), y = avg_dps, fill = set)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~star_level, nrow = 1, labeller = labeller(star_level = function(x) paste("★", x))) +
+  labs(title = "Average DPS Comparison", x = "Cost", y = "Average DPS") +
+  theme_minimal() +
+  theme(legend.title = element_blank())
+
+damage_comparison <- ggplot(combined_sets, aes(x = as.factor(cost), y = avg_damage, fill = set)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~star_level, nrow = 1, labeller = labeller(star_level = function(x) paste("★", x))) +
+  labs(title = "Average Damage Comparison", x = "Cost", y = "Average Damage") +
+  theme_minimal() +
+  theme(legend.title = element_blank())
+
+# Display interactive versions separately
+plotly::ggplotly(health_comparison)
+plotly::ggplotly(dps_comparison)
+plotly::ggplotly(damage_comparison)
+```
+
+Bar charts indicate that higher costs correspond to higher stats across all star levels. However, the stats of 6-cost champions are significantly higher than those of any other cost category. Additionally, the stats for 1- to 5-cost champions in Set 12 tend to be slightly higher than those in Set 13, which makes the high stats of 6-cost champions even more pronounced. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Normalized stats Calculation
+#############################################
+
+# Calculate adjusted costs based on star level
+arranged_champions_set12$adjusted_cost <- case_when(
+  arranged_champions_set12$star_level == 1 ~ arranged_champions_set12$cost,
+  arranged_champions_set12$star_level == 2 ~ arranged_champions_set12$cost * 3,
+  arranged_champions_set12$star_level == 3 ~ arranged_champions_set12$cost * 9
+)
+
+arranged_champions_set13$adjusted_cost <- case_when(
+  arranged_champions_set13$star_level == 1 ~ arranged_champions_set13$cost,
+  arranged_champions_set13$star_level == 2 ~ arranged_champions_set13$cost * 3,
+  arranged_champions_set13$star_level == 3 ~ arranged_champions_set13$cost * 9
+)
+
+# Calculate normalized values for Set 12
+normalized_set12 <- arranged_champions_set12 %>%
+  mutate(
+    normalized_health = health / adjusted_cost,
+    normalized_damage = damage / adjusted_cost,
+    normalized_dps = dps / adjusted_cost
+  )
+
+# Calculate normalized values for Set 13
+normalized_set13 <- arranged_champions_set13 %>%
+  mutate(
+    normalized_health = health / adjusted_cost,
+    normalized_damage = damage / adjusted_cost,
+    normalized_dps = dps / adjusted_cost
+  )
+
+# Average normalized values for Set 12
+averaged_normalized_set12 <- normalized_set12 %>%
+  group_by(cost, star_level) %>%
+  summarise(
+    avg_normalized_health = mean(normalized_health),
+    avg_normalized_damage = mean(normalized_damage),
+    avg_normalized_dps = mean(normalized_dps)
+  )
+
+# Average normalized values for Set 13
+averaged_normalized_set13 <- normalized_set13 %>%
+  group_by(cost, star_level) %>%
+  summarise(
+    avg_normalized_health = mean(normalized_health),
+    avg_normalized_damage = mean(normalized_damage),
+    avg_normalized_dps = mean(normalized_dps)
+  )
+
+# Add set labels
+set12_normalized_avg_summary <- averaged_normalized_set12 %>%
+  mutate(set = "Set 12")
+
+set13_normalized_avg_summary <- averaged_normalized_set13 %>%
+  mutate(set = "Set 13")
+
+# Combine both sets into one dataset for comparison
+combined_normalized_sets <- bind_rows(set12_normalized_avg_summary, set13_normalized_avg_summary)
+```
+
+## Set 12 vs Set 13: Normalized stats Comparison by Cost and Star Level
+
+For these charts, stats are normalized by cost, where 1-star units are worth their base cost (1–6), 2-star units are worth three times their base cost, and 3-star units are worth nine times their base cost (Normalized Stat = Stat / Total Cost at Star Level). 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10}
+#############################################
+# Interactive Normalized Stats Comparison Visualizations
+#############################################
+
+# Comparison of normalized Health
+norm_health_comparison <- ggplot(combined_normalized_sets, aes(x = as.factor(cost), y = avg_normalized_health, fill = set)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~star_level, nrow = 1, labeller = labeller(star_level = function(x) paste("★", x))) +
+  labs(title = "Normalized Health Comparison", x = "Cost", y = "Normalized Health") +
+  theme_minimal() +
+  theme(legend.title = element_blank())
+
+# Comparison of normalized DPS
+norm_dps_comparison <- ggplot(combined_normalized_sets, aes(x = as.factor(cost), y = avg_normalized_dps, fill = set)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~star_level, nrow = 1, labeller = labeller(star_level = function(x) paste("★", x))) +
+  labs(title = "Normalized DPS Comparison", x = "Cost", y = "Normalized DPS") +
+  theme_minimal() +
+  theme(legend.title = element_blank())
+
+# Comparison of normalized Damage
+norm_damage_comparison <- ggplot(combined_normalized_sets, aes(x = as.factor(cost), y = avg_normalized_damage, fill = set)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~star_level, nrow = 1, labeller = labeller(star_level = function(x) paste("★", x))) +
+  labs(title = "Normalized Damage Comparison", x = "Cost", y = "Normalized Damage") +
+  theme_minimal() +
+  theme(legend.title = element_blank())
+
+# Display each as an interactive plot
+plotly::ggplotly(norm_health_comparison)
+plotly::ggplotly(norm_dps_comparison)
+plotly::ggplotly(norm_damage_comparison)
+```
+
+The normalized bar charts show that although 6-cost champions have very high absolute stats, 1-cost champions offer a higher stats-to-cost ratio. When cost is taken into account, the normalized stats trend downward as cost increases, but the exceptionally high stats of 6-cost champions remain evident.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Heatmap Visualization for Normalized Health
+#############################################
+
+# Create heatmap for normalized health across sets and costs
+heatmap_health <- ggplot(combined_normalized_sets, aes(x = as.factor(cost), y = as.factor(star_level), fill = avg_normalized_health)) +
+  geom_tile(color = "white") +
+  scale_fill_viridis_c(option = "inferno") +
+  labs(title = "Heatmap of Normalized Health", x = "Cost", y = "Star Level", fill = "Avg Norm Health") +
+  theme_minimal() +
+  facet_wrap(~set, nrow = 1)
+
+print(heatmap_health)
+```
+
+The heatmap agrees with the bar charts above, supporting the claim that 1 costs have significantly higher normalized stats, namely health as shown by the heatmap, as compared to any other cost. 
+
+## Set 12 Vs Set 13: Distribution Comparison
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Distribution Comparison with Violin Plots
+#############################################
+
+# Combine the datasets with an added 'set' column
+combined_arranged <- bind_rows(
+  arranged_champions_set12 %>% mutate(set = "Set 12"),
+  arranged_champions_set13 %>% mutate(set = "Set 13")
+)
+
+# Create violin plots for health distribution
+health_violin <- ggplot(combined_arranged, aes(x = as.factor(cost), y = health, fill = as.factor(star_level))) +
+  geom_violin(trim = FALSE, alpha = 0.5) +
+  geom_boxplot(width = 0.1, outlier.shape = NA, alpha = 0.7) +
+  facet_grid(set ~ star_level, 
+             labeller = labeller(star_level = function(x) paste("★", x))) +
+  labs(title = "Distribution of Health by Cost and Star Level Across Sets",
+       x = "Cost",
+       y = "Health") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# Create violin plots for DPS distribution
+dps_violin <- ggplot(combined_arranged, aes(x = as.factor(cost), y = dps, fill = as.factor(star_level))) +
+  geom_violin(trim = FALSE, alpha = 0.5) +
+  geom_boxplot(width = 0.1, outlier.shape = NA, alpha = 0.7) +
+  facet_grid(set ~ star_level, 
+             labeller = labeller(star_level = function(x) paste("★", x))) +
+  labs(title = "Distribution of DPS by Cost and Star Level Across Sets",
+       x = "Cost",
+       y = "DPS") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# Create violin plots for damage distribution
+damage_violin <- ggplot(combined_arranged, aes(x = as.factor(cost), y = damage, fill = as.factor(star_level))) +
+  geom_violin(trim = FALSE, alpha = 0.5) +
+  geom_boxplot(width = 0.1, outlier.shape = NA, alpha = 0.7) +
+  facet_grid(set ~ star_level, 
+             labeller = labeller(star_level = function(x) paste("★", x))) +
+  labs(title = "Distribution of Damage by Cost and Star Level Across Sets",
+       x = "Cost",
+       y = "Damage") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# Print the plots
+print(health_violin)
+print(dps_violin)
+print(damage_violin)
+```
+
+Violin plots reinforce previous trends, showing that higher-cost units with higher star levels generally have higher stats, though there are exceptions. Notably, the DPS of 3-star, 6-cost champions has a wide range, indicating that while some 6-cost champions exhibit very high DPS, others have much lower DPS. This variability highlights the unique impact of 6-cost champions in the game.
