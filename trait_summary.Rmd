@@ -1250,11 +1250,11 @@ grid.arrange(plot1, plot2, plot3, plot4, ncol = 2)
 
 From the figure above, the best traits for Set 12 are Vanguard, Blaster and Honeymancy, while the best traits for Set 13 are Artillerist, Ambusher and Experiment. 
 
-## Summary
+# Summary
 
 This project investigated how champion stats, traits, and game design changes between Set 12 and Set 13 in *Teamfight Tactics* (TFT) influence team performance. By analyzing thousands of real ranked team compositions and applying multiple modeling approaches, we identified key structural changes and predictors of success in the evolving TFT metagame.
 
-### Key Findings
+## Key Findings
 
 - **Champion Stat Scaling**  
   Champion stats (Health, Damage, DPS) scale positively with both cost and star level in both sets. However, Set 13 introduces a **sharper stat gradient**, primarily driven by the addition of **6-cost champions**, which significantly outpace lower-cost units in raw stats. This supports the hypothesis that Set 13 meaningfully expanded the power curve.
@@ -1276,10 +1276,10 @@ This project investigated how champion stats, traits, and game design changes be
   - *Set 12*: Vanguard, Blaster, and Honeymancy were key contributors to winning teams.  
   - *Set 13*: Artillerist, Ambusher, and Experiment emerged as the most influential traits.
 
-### Overall Conclusion
+## Overall Conclusion
 
 The introduction of 6-cost champions in Set 13 marked a significant escalation in power, reshaping the competitive landscape. However, this power spike did not break existing game balance mechanisms; rather, it **layered new strategic depth onto the existing framework**. Across both sets, **traits remained the dominant factor in team success**, validating the game’s emphasis on synergy over raw strength.
 
-### Broader Implications and Limitations
+## Broader Implications and Limitations
 
 This analysis highlights the strength of trait-based design in sustaining strategic variety across TFT sets. However, it is limited by its reliance on **composition-level data**, which prevents precise measurement of individual unit contributions. Moreover, model predictions are constrained by the **accuracy and completeness of scraped data** from third-party sources. Future analyses could benefit from player-level match data or official Riot APIs to improve granularity and causal inference.
