@@ -839,7 +839,7 @@ kable_damage_set13 <- kable(ordered_by_damage_set13,
 
 ## Set 12: Stats by Cost and Star Level
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=12}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8}
 #############################################
 # Create Interactive Visualizations for Set 12
 #############################################
@@ -876,7 +876,7 @@ There is a clear trend across all star levels: as the cost increases, all three 
 
 ## Set 13: Stats by Cost and Star Level
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=12}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8}
 #############################################
 # Create Interactive Visualizations for Set 13
 #############################################
@@ -985,7 +985,7 @@ combined_sets <- bind_rows(set12_avg_summary, set13_avg_summary)
 
 ## Set 12 vs Set 13: Average stats Comparison by Cost and Star Level
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8}
 #############################################
 # Interactive Bar Chart Comparisons
 #############################################
@@ -1087,7 +1087,7 @@ combined_normalized_sets <- bind_rows(set12_normalized_avg_summary, set13_normal
 
 For these charts, stats are normalized by cost, where 1-star units are worth their base cost (1–6), 2-star units are worth three times their base cost, and 3-star units are worth nine times their base cost (Normalized Stat = Stat / Total Cost at Star Level). 
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8}
 #############################################
 # Interactive Normalized Stats Comparison Visualizations
 #############################################

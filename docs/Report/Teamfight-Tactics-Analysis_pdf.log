@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.4.30)  30 APR 2025 14:53
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2025.4.30)  30 APR 2025 19:34
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -556,7 +556,7 @@ LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 12
 (c:/Users/Owner/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-<TFT.png, id=65, 2396.955pt x 1674.255pt>
+<TFT.png, id=59, 2396.955pt x 1674.255pt>
 File: TFT.png Graphic file (type png)
 <use TFT.png>
 Package pdftex.def Info: TFT.png  used on input line 162.
@@ -572,7 +572,7 @@ File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 
 [4]
-<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-18-1.pdf, id=91, 867.24pt x 325.215pt>
+<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-18-1.pdf, id=85, 867.24pt x 325.215pt>
 File: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-18-1.pdf Graphic file (type pdf)
 <use Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-18-1.pdf>
 Package pdftex.def Info: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-18-1.pdf  used on input line 349.
@@ -580,12 +580,12 @@ Package pdftex.def Info: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnam
 
 
 [5{c:/Users/Owner/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{c:/Users/Owner/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}]
-<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-19-1.pdf, id=101, 867.24pt x 325.215pt>
+<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-19-1.pdf, id=95, 867.24pt x 325.215pt>
 File: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-19-1.pdf Graphic file (type pdf)
 <use Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-19-1.pdf>
 Package pdftex.def Info: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-19-1.pdf  used on input line 357.
 (pdftex.def)             Requested size: 469.75827pt x 176.15933pt.
-<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-21-1.pdf, id=102, 722.7pt x 325.215pt>
+<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-21-1.pdf, id=96, 722.7pt x 325.215pt>
 File: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-21-1.pdf Graphic file (type pdf)
 <use Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-21-1.pdf>
 Package pdftex.def Info: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-21-1.pdf  used on input line 370.
@@ -593,12 +593,12 @@ Package pdftex.def Info: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnam
 
 
 [6 <./Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-18-1.pdf> <./Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-19-1.pdf>]
-<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-23-1.pdf, id=125, 722.7pt x 325.215pt>
+<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-23-1.pdf, id=119, 722.7pt x 325.215pt>
 File: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-23-1.pdf Graphic file (type pdf)
 <use Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-23-1.pdf>
 Package pdftex.def Info: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-23-1.pdf  used on input line 388.
 (pdftex.def)             Requested size: 469.76045pt x 211.3922pt.
-<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-24-1.pdf, id=126, 469.755pt x 325.215pt>
+<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-24-1.pdf, id=120, 469.755pt x 325.215pt>
 File: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-24-1.pdf Graphic file (type pdf)
 <use Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-24-1.pdf>
 Package pdftex.def Info: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-24-1.pdf  used on input line 396.
@@ -606,17 +606,17 @@ Package pdftex.def Info: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnam
 
 
 [7 <./Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-21-1.pdf> <./Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-23-1.pdf>]
-<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-25-1.pdf, id=143, 469.755pt x 325.215pt>
+<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-25-1.pdf, id=136, 469.755pt x 325.215pt>
 File: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-25-1.pdf Graphic file (type pdf)
 <use Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-25-1.pdf>
 Package pdftex.def Info: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-25-1.pdf  used on input line 405.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
-<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-25-2.pdf, id=144, 469.755pt x 325.215pt>
+<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-25-2.pdf, id=137, 469.755pt x 325.215pt>
 File: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-25-2.pdf Graphic file (type pdf)
 <use Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-25-2.pdf>
 Package pdftex.def Info: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-25-2.pdf  used on input line 406.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
-<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-25-3.pdf, id=145, 469.755pt x 325.215pt>
+<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-25-3.pdf, id=138, 469.755pt x 325.215pt>
 File: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-25-3.pdf Graphic file (type pdf)
 <use Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-25-3.pdf>
 Package pdftex.def Info: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-25-3.pdf  used on input line 407.
@@ -641,7 +641,7 @@ Overfull \vbox (25.78995pt too high) has occurred while \output is active []
 
 
 [10 <./Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-25-1.pdf> <./Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-25-2.pdf>]
-<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-26-1.pdf, id=182, 469.755pt x 325.215pt>
+<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-26-1.pdf, id=176, 469.755pt x 325.215pt>
 File: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-26-1.pdf Graphic file (type pdf)
 <use Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-26-1.pdf>
 Package pdftex.def Info: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-26-1.pdf  used on input line 437.
@@ -655,7 +655,7 @@ LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-35-1.pdf, id=196, 469.755pt x 325.215pt>
+<Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-35-1.pdf, id=190, 469.755pt x 325.215pt>
 File: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-35-1.pdf Graphic file (type pdf)
 <use Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-35-1.pdf>
 Package pdftex.def Info: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-35-1.pdf  used on input line 540.
@@ -667,33 +667,31 @@ Package pdftex.def Info: Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnam
 [13]
 
 [14 <./Teamfight-Tactics-Analysis_pdf_files/figure-latex/unnamed-chunk-35-1.pdf>]
-Underfull \hbox (badness 10000) in paragraph at lines 603--606
+Underfull \hbox (badness 10000) in paragraph at lines 596--599
 
  []
 
 
 
-[15]
-
-[16] (./Teamfight-Tactics-Analysis_pdf.aux)
+[15] (./Teamfight-Tactics-Analysis_pdf.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-04-14>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 13002 strings out of 471589
- 207636 string characters out of 5519310
- 616865 words of memory out of 5000000
- 39289 multiletter control sequences out of 15000+600000
+ 12996 strings out of 471589
+ 207568 string characters out of 5519310
+ 616810 words of memory out of 5000000
+ 39285 multiletter control sequences out of 15000+600000
  677926 words of font info for 83 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  89i,9n,93p,907b,504s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/Users/Owner/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb><c:/Users/Owner/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb><c:/Users/Owner/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb><c:/Users/Owner/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb><c:/Users/Owner/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb><c:/Users/Owner/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb><c:/Users/Owner/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb><c:/Users/Owner/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb>
-Output written on Teamfight-Tactics-Analysis_pdf.pdf (16 pages, 6822715 bytes).
+Output written on Teamfight-Tactics-Analysis_pdf.pdf (15 pages, 6821063 bytes).
 PDF statistics:
- 366 PDF objects out of 1000 (max. 8388607)
- 304 compressed objects within 4 object streams
- 52 named destinations out of 1000 (max. 500000)
- 256 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 348 PDF objects out of 1000 (max. 8388607)
+ 288 compressed objects within 3 object streams
+ 50 named destinations out of 1000 (max. 500000)
+ 232 words of extra memory for PDF output out of 10000 (max. 10000000)
 

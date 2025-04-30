@@ -61,8 +61,8 @@ In TFT, eight players face off in a round-robin format. Each player assembles a 
 - **Star Level**: Units can be upgraded:
   - 3 × 1-star → 2-star
   - 3 × 2-star → 3-star
-  - 3 × 3-star → 4-star (Set 13 only)  
-  The higher the star level, the stronger each attribute and ability of the unit becomes.
+  - 3 × 3-star → 4-star 
+  (The higher the star level, the stronger each attribute and ability of the unit becomes.)
 - **Health**: Total damage a unit can absorb.
 - **Damage**: Damage dealt per basic attack.
 - **DPS (Damage Per Second)**: Average damage output per second.

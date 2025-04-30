@@ -892,6 +892,8 @@ plot_ly(
   )
 ```
 
+We can see from the scatterplot that the winrates of the best performing champions in Set 12 are higher than that of Set 13. This could indicate that the balancing is better in Set 13. 
+
 ## Trait-Level Win Rate Summary
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
