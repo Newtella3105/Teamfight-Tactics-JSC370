@@ -10,6 +10,8 @@ output:
 # install.packages("GGally")
 # install.packages("plotly")
 # install.packages("kableExtra")
+# install.packages("randomForest")
+# install.packages("DT")
 
 library(plotly)
 library(GGally)
@@ -24,47 +26,144 @@ library(tidyr)
 library(ggplot2)
 library(knitr)
 library(gridExtra)
+library(jsonlite)
+library(tibble)
+library(mgcv)
+library(randomForest)
+library(DT)
 ```
 
 # Github Link:
 
 https://github.com/Newtella3105/Teamfight-Tactics-JSC370
 
+# Introduction
+
+This project analyzes champion and trait data from **Teamfight Tactics (TFT)** Sets 12 and 13 to understand how changes in champion cost and design influence balance and performance. TFT, developed by Riot Games, is an auto-battler game where players strategically build teams of champions that automatically fight in a series of combat rounds. Each new "set" introduces fresh units, traits, and mechanics that reshape the meta-game. 
+
+Set 13 introduced a major change: **6-cost champions** with **exclusive 4-star upgrades**, expanding the power curve beyond the previous 5-cost maximum. This project aims to investigate how this design shift affects champion statistics, value efficiency, and trait-level impact on performance outcomes.
+
 # Background
 
-Teamfight Tactics (TFT) is an auto-battler strategy game developed by Riot Games, where players build teams of champions and battle against other players’ teams in a series of rounds. Each champion has unique traits and abilities that interact with other champions on the board. Over time, TFT introduces new sets, each containing different champions, traits, and mechanics.
+In TFT, eight players face off in a round-robin format. Each player assembles a team of **champions** (also known as **units**) drawn from a shared shop. These units battle autonomously on a hexagonal **board** against other players’ teams.
 
-Each unit has a dedicated cost, which determines both its overall strength and rarity. These costs are indicated in gold, which can range from 1 to 6. In general, the higher the cost of the unit, the stronger and rarer it is. In Set 13 specifically, 6-cost champions are available from the shop, starting at a very low chance of appearing and increasing as the player’s level rises and later stages progress.
+## Key Concepts and Definitions
 
-Another notable mechanic in TFT is the star system. When you purchase a unit normally from the shop, it enters as a 1-star (bronze) unit. Every time you have three copies of the same unit at the same star level on your board, they merge into a unit with a higher star level. In TFT, there are four star levels: 1-star (bronze), 2-star (silver), 3-star (gold), and 4-star (emerald). The higher the star level, the stronger each attribute and ability of the unit becomes.
+- **Unit**: A controllable champion with traits, abilities, and stats.
+- **Trait**: A label representing a champion’s role or origin (e.g., "Mage", "Bruiser"). Traits activate bonuses when multiple units share the same trait, creating **synergies**.
+- **Cost**: The gold price to buy a unit (1–6). Higher-cost units are rarer and typically stronger.
+- **Star Level**: Units can be upgraded:
+  - 3 × 1-star → 2-star
+  - 3 × 2-star → 3-star
+  - 3 × 3-star → 4-star (Set 13 only)  
+  The higher the star level, the stronger each attribute and ability of the unit becomes.
+- **Health**: Total damage a unit can absorb.
+- **Damage**: Damage dealt per basic attack.
+- **DPS (Damage Per Second)**: Average damage output per second.
+- **Player Level**: Determines how many units a player can deploy (max: 10) and affects odds of finding high-cost units in the shop.
+- **Combat Round**: A fight phase where units act automatically.
 
-Champion units in TFT have key statistics (stats) that scale with star level; the three that will be focused on in this project are:
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::include_graphics("TFT.png")
+```
 
-- Health: How much damage a champion can take.
+# Scope and Unit of Analysis
 
-- Damage: How much damage a champion deals with each attack.
+The dataset includes win and top4 rates for thousands of team **compositions** (not individual units). (Note: win rate refers to the Top 1 Rate, i.e., the proportion of games where a composition finishes first. Each composition is a unique arrangement of champions and traits. Thus:
 
-- DPS (Damage per Second): How much damage a champion deals per second on average.
+- **Each observation is a team composition**.
+- **Performance metrics (win/top4 rate) are per composition**.
+- To analyze **unit-level impact**, we decompose each composition into its champions and traits, then compute **average performance** for each unit or trait based on all compositions it appears in.  
+  These are not raw per-unit win rates but are **derived values** from aggregate composition performance.
 
-For this project, the focus is on comparing Sets 12 and 13 of TFT. In Set 13, the game introduced 6-cost champions, whereas the maximum champion cost in previous sets was 5. The goal of this project is to analyze and process champion and trait data for both Sets 12 and 13 to look for trends between cost and champion stats.
+# Research Questions
 
-# Questions
+- How do champion stats (health, damage, DPS) scale with cost in Set 13 compared to Set 12, and how does this affect win rate?
+- How does the distribution of win rates vary across champion cost tiers and traits?
+- Are normalized stats (stat divided by total cost at star level) predictive of win rate?
+- Which predictors (stats, traits, or both) best explain champion-level win rate?
+- Which model type (LM, GAM, RF) performs best in predicting win rate across sets and inputs?
 
-- How do champion stats (health, damage, DPS) scale with cost in Set 13 compared to Set 12, particularly with the introduction of 6-cost champions in Set 13?
+# Hypotheses
 
-- How does the distribution of champion stats change across different costs between Set 12 and Set 13?
+- The introduction of 6-cost champions in Set 13 creates a significant win rate advantage over lower-cost units.
+- While high-cost units have greater absolute stats, low-cost units offer better stat efficiency and may perform better relative to cost.
+- Champion stat scaling across star levels is consistent across sets, suggesting win rate differences stem from design changes rather than inflation.
+- Traits are stronger predictors of win rate than raw stats, due to synergy bonuses that impact team-level performance.
+- Random Forest models will outperform LM and GAM in predicting win rate due to their ability to model nonlinear interactions between stats and traits.
 
-- Is there a significant difference in normalized stats (stats divided by cost) between the two sets?
+# Methods
 
-- How does the statistical balance of champions shift when moving from Set 12 to Set 13?
+The primary data sources for this project were:
 
-## Hypotheses
+- **[TFTactics.gg](https://tftactics.gg)**: Used to scrape champion and trait data, including base stats (health, damage, DPS) and trait descriptions.
+- **[TFTactics Meta Report Endpoint](https://tftactics-data.kda.gg/meta/report)**: Used to scrape win rate and top4 rate for full team compositions, available via the JSON structure `data$summary-section`.
 
-- The introduction of 6-cost champions in Set 13 creates a significant power difference compared to 5-cost champions in Set 12.
+Data were collected for **Set 12** and **Set 13** using a combination of R tools (`rvest`, `jsonlite`, `stringr`, etc.) and archived through the [Wayback Machine](https://web.archive.org) to ensure consistency after TFT site updates.
 
-- The stat-to-cost ratio (value efficiency) decreases as champion cost increases in both sets.
+## Data Wrangling
 
-- Champion stat scaling between star levels remains consistent across both sets despite balance changes.
+Once the data was acquired, the following steps were taken:
+
+### Cleaning Champion and Trait Names
+
+Champion and trait names were cleaned by removing artifacts such as "TFT | Guide" using string operations like `str_remove_all()` to standardize text across sources.
+
+### Handling Missing Data
+
+No missing values were identified in the scraped champion and trait data.
+
+### Filtering Invalid Traits
+
+Due to a scraping error in Set 12, many champions were incorrectly assigned a "Portal" trait with no type. These were filtered out, and only valid trait-typed rows were retained.
+
+### Composition Win Rate Source
+
+Win and top4 rates for team compositions were extracted from:
+- **[https://tftactics-data.kda.gg/meta/report](https://tftactics-data.kda.gg/meta/report)**  
+This endpoint returns JSON data with composition performance metrics for ranked games, including the list of champions in each composition and their aggregate performance.
+
+### Composition Decomposition
+
+Each composition was split into individual champion and trait components. For each champion or trait, we then computed **average win/top4 rates across all compositions in which they appeared**. These derived statistics allow us to model unit-level performance from team-level data.
+
+### Modeling Approach
+
+To assess how well champion stats and traits predict composition-level win rate, we implemented three modeling frameworks:
+
+- **Linear Models (LM)**: To estimate linear relationships between predictors (stats and/or traits) and win rate.
+- **Generalized Additive Models (GAM)**: To capture non-linear effects of continuous variables like health and DPS using smooth functions.
+- **Random Forest (RF)**: A non-parametric ensemble model used to capture complex interactions between traits and stats with improved predictive performance.
+
+Each model was trained on unit-level datasets, where each row represents a champion along with the average win rate across all compositions in which it appears. Models were evaluated using $R^2$, RMSE, and AIC (where applicable).
+
+# Variable Summary
+
+The following table summarizes the key variables used in this analysis:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Variable Summary Table
+#############################################
+
+variable_summary <- data.frame(
+  Variable = c("win_rate", "top4_rate", "cost", "health", "dps", "damage", "trait_*"),
+  Type = c("Numeric", "Numeric", "Numeric", "Numeric", "Numeric", "Numeric", "Binary (0/1)"),
+  Description = c(
+    "Top 1 Rate — the proportion of games where the composition finished 1st",
+    "Proportion of games where the composition placed in the top 4",
+    "Champion gold cost (ranges from 1 to 6)",
+    "HP of the champion at each star level",
+    "Damage per second (includes attack speed)",
+    "Damage dealt per basic attack",
+    "Dummy variable indicating whether a unit has a specific trait"
+  )
+)
+
+kable(variable_summary, format = "html", caption = "Table 1: Summary of Key Variables Used in Analysis") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE) %>%
+  row_spec(0, bold = TRUE, color = "white", background = "#2C3E50")
+```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 #############################################
@@ -101,30 +200,6 @@ trait_info_set12 <- tibble(
   trait_description = character()
 )
 ```
-
-# Methods
-
-The primary dataset for this analysis was obtained from TFTactics.gg, a site that provides detailed information about TFT champions, traits, and their interactions for each set. Data was extracted from the website using web scraping techniques with R-based tools to collect relevant information for Sets 12 and 13.
-
-## Data Wrangling
-
-Once the data was acquired, the following data cleaning and wrangling steps were performed to prepare the data for analysis:
-
-### Cleaning Champion and Trait Names:
-
-Champion names and trait types were cleaned by removing extraneous text, such as "TFT | Guide" and other formatting inconsistencies, using string manipulation functions like str_remove_all() in R. This ensured the names were standardized for further analysis.
-
-### Handling Missing Data:
-
-There were no missing data, as the website contains all the necessary information about champions in both sets.
-
-### Filtering:
-
-An error in reading Set 12 data caused every champion to have the trait “Portal” with trait_type NA, whereas champions that should have this trait have it classified as “Origin.” The rows with “Portal” and trait_type NA were removed to correct this error.
-
-### Issues with Web Scraping:
-
-While working on the project, TFTactics.gg updated its information due to the release of Set 14, which caused issues with scraping. The data remaining in the R environment was downloaded to a JSON file for Set 13, and both sets were saved to JSON files to preserve the data in case of future updates. All data used in this project was obtained via web scraping of the TFTactics.gg website.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 #############################################
@@ -444,7 +519,6 @@ extract_all_champion_data_set13 <- function(champion_names) {
 # all_data_set13 <- extract_all_champion_data_set13(champion_names_set13)
 ```
 
-
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Read the JSON files
 champion_info_set12 <- fromJSON("champion_info_set12.json")
@@ -497,7 +571,212 @@ all_data_set13$champion_info <- all_data_set13$champion_info %>%
 # print(all_data_set13$champion_info)
 ```
 
-# Preliminary Results
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# SET 12 - Extract All Winrate Data
+#############################################
+
+# Read JSON
+url_set12 <- "https://web.archive.org/web/20240917151936/https://tftactics-data.kda.gg/meta/report"
+report_data_set12 <- fromJSON(url_set12)
+
+# Go to the summary-section
+summary_section_set12 <- report_data_set12$data$`summary-section`
+
+# Helper function to clean a single name
+clean_champion_name_set12 <- function(x) {
+  x <- gsub("^[0-9]-", "", x)
+  x <- gsub("^tft12_", "", x)
+  x <- gsub("-[0-9]+$", "", x)
+  x <- tolower(x)
+  x <- gsub("_", " ", x)
+  x <- tools::toTitleCase(x)
+  x
+}
+
+# Build the dataframe
+comp_df_set12 <- tibble(
+  win_rate = summary_section_set12$win_rate,
+  top4_rate = summary_section_set12$top4_rate,
+  champions = sapply(summary_section_set12$composition, function(champs_vec) {
+    cleaned_champions <- sapply(champs_vec, clean_champion_name_set12)
+    paste(cleaned_champions, collapse = ", ")
+  })
+)
+
+# Separate Champions from Traits
+comp_df_clean_set12 <- comp_df_set12 %>%
+  mutate(champions = str_split(champions, ",\\s*")) %>%
+  rowwise() %>%
+  mutate(
+    champions_list = list(champions[champions %in% champion_names_set12]),
+    traits_list = list(champions[!(champions %in% champion_names_set12)])
+  ) %>%
+  ungroup() %>%
+  mutate(
+    champions = sapply(champions_list, function(x) paste(x, collapse = ", ")),
+    traits = sapply(traits_list, function(x) paste(x, collapse = ", "))
+  ) %>%
+  select(win_rate, top4_rate, champions, traits)
+
+# print(comp_df_clean_set12)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# SET 13 - Extract All Winrate Data
+#############################################
+
+# Download compressed file
+temp_file_set13 <- tempfile(fileext = ".gz")
+download.file(
+  url = "https://web.archive.org/web/20250113142238/https://tftactics-data.kda.gg/meta/report",
+  destfile = temp_file_set13,
+  mode = "wb"
+)
+
+# Decompress using gzcon
+con_set13 <- gzcon(file(temp_file_set13, "rb"))
+text_set13 <- readLines(con_set13, warn = FALSE)
+close(con_set13)
+
+# Parse the text as JSON
+report_data_set13 <- fromJSON(paste(text_set13, collapse = ""))
+
+# Go to the summary-section
+summary_section_set13 <- report_data_set13$data$`summary-section`
+
+# Helper function to clean a single name
+clean_champion_name_set13 <- function(x) {
+  x <- gsub("^[0-9]-", "", x)
+  x <- gsub("^tft13_", "", x)
+  x <- gsub("-[0-9]+$", "", x)
+  x <- tolower(x)
+  x <- gsub("_", " ", x)
+  x <- tools::toTitleCase(x)
+  x
+}
+
+# Build the dataframe
+comp_df_set13 <- tibble(
+  win_rate = summary_section_set13$win_rate,
+  top4_rate = summary_section_set13$top4_rate,
+  champions = sapply(summary_section_set13$composition, function(champs_vec) {
+    cleaned_champions <- sapply(champs_vec, clean_champion_name_set13)
+    paste(cleaned_champions, collapse = ", ")
+  })
+)
+
+# Separate Champions from Traits
+comp_df_clean_set13 <- comp_df_set13 %>%
+  mutate(champions = str_split(champions, ",\\s*")) %>%
+  rowwise() %>%
+  mutate(
+    champions_list = list(champions[champions %in% champion_names_set13]),
+    traits_list = list(champions[!(champions %in% champion_names_set13)])
+  ) %>%
+  ungroup() %>%
+  mutate(
+    champions = sapply(champions_list, function(x) paste(x, collapse = ", ")),
+    traits = sapply(traits_list, function(x) paste(x, collapse = ", "))
+  ) %>%
+  select(win_rate, top4_rate, champions, traits)
+
+# print(comp_df_clean_set13)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Analyze Set 12 and Set 13 Champion and Trait Stats
+#############################################
+
+# Explode champions and traits into separate rows
+
+# For Set 12 - explode champions
+comp_df_clean_set12_exploded <- comp_df_clean_set12 %>%
+  mutate(
+    champions = str_split(champions, ",\\s*")
+  ) %>%
+  unnest(champions) %>%
+  mutate(
+    champions = str_trim(champions)
+  )
+
+# For Set 13 - explode champions
+comp_df_clean_set13_exploded <- comp_df_clean_set13 %>%
+  mutate(
+    champions = str_split(champions, ",\\s*")
+  ) %>%
+  unnest(champions) %>%
+  mutate(
+    champions = str_trim(champions)
+  )
+
+# For Set 12 - explode traits
+comp_df_clean_set12_traits_exploded <- comp_df_clean_set12 %>%
+  mutate(
+    traits = str_split(traits, ",\\s*")
+  ) %>%
+  unnest(traits) %>%
+  mutate(
+    traits = str_trim(traits)
+  )
+
+# For Set 13 - explode traits
+comp_df_clean_set13_traits_exploded <- comp_df_clean_set13 %>%
+  mutate(
+    traits = str_split(traits, ",\\s*")
+  ) %>%
+  unnest(traits) %>%
+  mutate(
+    traits = str_trim(traits)
+  )
+
+# Summarize Champion Stats
+champion_summary_set12 <- comp_df_clean_set12_exploded %>%
+  group_by(champions) %>%
+  summarise(
+    avg_win_rate = mean(win_rate, na.rm = TRUE),
+    avg_top4_rate = mean(top4_rate, na.rm = TRUE),
+    count = n(),
+    .groups = "drop"
+  )
+
+champion_summary_set13 <- comp_df_clean_set13_exploded %>%
+  group_by(champions) %>%
+  summarise(
+    avg_win_rate = mean(win_rate, na.rm = TRUE),
+    avg_top4_rate = mean(top4_rate, na.rm = TRUE),
+    count = n(),
+    .groups = "drop"
+  )
+
+# Summarize Trait Stats
+trait_summary_set12 <- comp_df_clean_set12_traits_exploded %>%
+  group_by(traits) %>%
+  summarise(
+    avg_win_rate = mean(win_rate, na.rm = TRUE),
+    avg_top4_rate = mean(top4_rate, na.rm = TRUE),
+    count = n(),
+    .groups = "drop"
+  )
+
+trait_summary_set13 <- comp_df_clean_set13_traits_exploded %>%
+  group_by(traits) %>%
+  summarise(
+    avg_win_rate = mean(win_rate, na.rm = TRUE),
+    avg_top4_rate = mean(top4_rate, na.rm = TRUE),
+    count = n(),
+    .groups = "drop"
+  )
+
+# champion_summary_set12
+# champion_summary_set13
+# trait_summary_set12
+# trait_summary_set13
+```
+
+# Champion Stat Distribution (No Win Rate)
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 #############################################
@@ -933,7 +1212,7 @@ For these charts, stats are normalized by cost, where 1-star units are worth the
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10}
 #############################################
-# Normalized stats Comparison Visualizations
+# Normalized Stats Comparison Visualizations
 #############################################
 
 # Comparison of normalized Health
@@ -982,56 +1261,7 @@ heatmap_health <- ggplot(combined_normalized_sets, aes(x = as.factor(cost), y = 
 print(heatmap_health)
 ```
 
-The heatmap supposed the bar charts above, supporting the claim that 1 costs have significantly higher normalized stats, namely health as shown by the heatmap, as compared to any other cost. 
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
-#############################################
-# Parallel Coordinates Plot for Star Level 3 Champions
-#############################################
-
-# Filter and prepare Set 12 data for parallel coordinates plot
-champion_stats_set12 <- arranged_champions_set12 %>% 
-  filter(star_level == 3) %>%
-  mutate(cost = as.factor(cost)) %>%
-  select(champion, cost, health, dps, damage)
-
-# Define a color palette for cost values 1 to 5
-colors_set12 <- c("1" = "red", "2" = "orange", "3" = "yellow", "4" = "green", "5" = "blue")
-
-# Create the parallel coordinates plot for Set 12
-set12_parallel <- ggparcoord(data = champion_stats_set12,
-           columns = 3:5,  # Columns with numeric stats: health, dps, damage
-           groupColumn = "cost",  # Color by cost (now a factor)
-           scale = "uniminmax") +
-  scale_color_manual(values = colors_set12) +
-  labs(title = "Parallel Coordinates Plot for Star Level 3 Champions (Set 12)",
-       y = "Normalized Value",
-       color = "Cost") +
-  theme_minimal()
-
-# Filter and prepare Set 13 data for parallel coordinates plot
-champion_stats_set13 <- arranged_champions_set13 %>% 
-  filter(star_level == 3) %>%
-  mutate(cost = as.factor(cost)) %>%
-  select(champion, cost, health, dps, damage)
-
-# Define a color palette for cost values 1 to 6
-colors_set13 <- c("1" = "red", "2" = "orange", "3" = "yellow", "4" = "green", "5" = "blue", "6" = "purple")
-
-# Create the parallel coordinates plot for Set 13
-set13_parallel <- ggparcoord(data = champion_stats_set13,
-           columns = 3:5,  # Columns with numeric stats: health, dps, damage
-           groupColumn = "cost",  # Color by cost (now a factor)
-           scale = "uniminmax") +
-  scale_color_manual(values = colors_set13) +
-  labs(title = "Parallel Coordinates Plot for Star Level 3 Champions (Set 13)",
-       y = "Normalized Value",
-       color = "Cost") +
-  theme_minimal()
-
-# print(set12_parallel)
-# print(set13_parallel)
-```
+The heatmap agrees with the bar charts above, supporting the claim that 1 costs have significantly higher normalized stats, namely health as shown by the heatmap, as compared to any other cost. 
 
 ## Set 12 Vs Set 13: Distribution Comparison
 
@@ -1090,94 +1320,447 @@ print(damage_violin)
 
 Violin plots reinforce previous trends, showing that higher-cost units with higher star levels generally have higher stats, though there are exceptions. Notably, the DPS of 3-star, 6-cost champions has a wide range, indicating that while some 6-cost champions exhibit very high DPS, others have much lower DPS. This variability highlights the unique impact of 6-cost champions in the game.
 
+# Champion and Trait Win Rate Analysis
+
+So far, we've explored how champion stats like health, damage, and DPS scale across costs and star levels in Sets 12 and 13. However, high stats don't necessarily translate to better performance. To assess how effective champions and traits actually are in-game, we now incorporate **win rate** as our performance metric.
+
+Win rate in this analysis refers to the **Top 1 Rate**, derived from thousands of real team compositions. Each champion's win rate is averaged across all compositions in which it appears. This allows us to examine whether certain champions or traits consistently contribute to victory — regardless of raw stats.
+
+The following interactive visualizations explore:
+- How champion cost relates to average win rate  
+- Which traits are most strongly associated with winning teams
+
+## Champion Win Rate vs Cost
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 #############################################
-# Statistical Analysis - Correlation Tests
+# Scatterplot: Cost vs Win Rate
 #############################################
 
-# Calculate correlation between different stats for each set
-correlation_set12 <- arranged_champions_set12 %>%
-  select(health, dps, damage) %>%
-  cor() %>%
-  as.data.frame() %>%
-  rownames_to_column("stat1") %>%
-  pivot_longer(-stat1, names_to = "stat2", values_to = "correlation") %>%
-  mutate(set = "Set 12")
+# Combine champion summaries
+scatter_data <- bind_rows(
+  champion_summary_set12 %>%
+    mutate(set = "Set 12"),
+  champion_summary_set13 %>%
+    mutate(set = "Set 13")
+)
 
-correlation_set13 <- arranged_champions_set13 %>%
-  select(health, dps, damage) %>%
-  cor() %>%
-  as.data.frame() %>%
-  rownames_to_column("stat1") %>%
-  pivot_longer(-stat1, names_to = "stat2", values_to = "correlation") %>%
-  mutate(set = "Set 13")
+# Add cost info from stat data (assuming 3-star only)
+cost_lookup <- bind_rows(arranged_champions_set12, arranged_champions_set13) %>%
+  filter(star_level == 3) %>%
+  select(champion, cost) %>%
+  distinct()
 
-# Combine correlation data
-combined_correlation <- bind_rows(correlation_set12, correlation_set13)
+# Merge cost and scatter_data
+scatter_data <- scatter_data %>%
+  left_join(cost_lookup, by = c("champions" = "champion"))
 
-# Create a heatmap to visualize correlations
-correlation_heatmap <- ggplot(combined_correlation, 
-                            aes(x = stat1, y = stat2, fill = correlation)) +
-  geom_tile() +
-  geom_text(aes(label = round(correlation, 2)), color = "white", size = 3) +
-  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                       midpoint = 0, limit = c(-1,1)) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Correlation Between Champion stats",
-       x = "", y = "") +
-  facet_wrap(~set, ncol = 2)
-
-print(correlation_heatmap)
-
-# Calculate correlation between cost and other stats
-cost_correlation_set12 <- arranged_champions_set12 %>%
-  group_by(star_level) %>%
-  summarize(
-    health_cost_corr = cor(cost, health),
-    damage_cost_corr = cor(cost, damage),
-    dps_cost_corr = cor(cost, dps),
-    .groups = "drop"
-  ) %>%
-  mutate(set = "Set 12")
-
-cost_correlation_set13 <- arranged_champions_set13 %>%
-  group_by(star_level) %>%
-  summarize(
-    health_cost_corr = cor(cost, health),
-    damage_cost_corr = cor(cost, damage),
-    dps_cost_corr = cor(cost, dps),
-    .groups = "drop"
-  ) %>%
-  mutate(set = "Set 13")
-
-# Combine cost correlation data
-combined_cost_correlation <- bind_rows(cost_correlation_set12, cost_correlation_set13)
-
-# Create a table for cost correlations
-cost_correlation_table <- combined_cost_correlation %>%
-  mutate(across(contains("corr"), round, 3)) %>%
-  kable(
-    caption = "Correlation Between Cost and Champion stats",
-    col.names = c("Star Level", "Health cost", "Damage cost", "DPS cost", "Set"),
-    format = "html",
-    align = c("l", "l", "l", "l", "l")  # Align all columns to the left
-  ) %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
-                full_width = FALSE) %>%
-  row_spec(0, bold = TRUE, color = "white", background = "#2E86C1")
-
-cost_correlation_table
+# Interactive Plot
+plot_ly(
+  data = scatter_data,
+  x = ~cost,
+  y = ~avg_win_rate,
+  type = "scatter",
+  mode = "markers",
+  color = ~set,
+  text = ~paste("Champion:", champions,
+                "<br>Set:", set,
+                "<br>Cost:", cost,
+                "<br>Avg Win Rate:", round(avg_win_rate, 4)),
+  hoverinfo = "text"
+) %>%
+  layout(
+    title = "Champion Win Rate vs Cost",
+    xaxis = list(title = "Champion Cost"),
+    yaxis = list(title = "Average Win Rate"),
+    legend = list(title = list(text = "<b>Set</b>"))
+  )
 ```
 
-Correlation analysis shows a strong positive relationship between cost and champion stats across all three metrics.. This makes sense since an increase in cost and/or star level is correlated with an increase in all 3 stats. 
+## Trait-Level Win Rate Summary
 
-Correlation analysis shows a strong positive relationship between cost and champion stats across all three metrics. In Set 12, the correlation between health and cost is slightly higher, suggesting that these champions tend to have higher health. Conversely, the correlation between damage and cost is slightly higher in Set 13, indicating that these champions deal more damage on average. The correlations between DPS and cost are very similar for both sets.
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Trait Win Rate Table (Set 12 & 13)
+#############################################
+
+# Combine both trait name lists
+valid_trait_names <- union(trait_names_set12, trait_names_set13)
+
+# Combine and filter both trait summaries
+trait_table_data <- bind_rows(
+  trait_summary_set12 %>%
+    mutate(set = "Set 12"),
+  trait_summary_set13 %>%
+    mutate(set = "Set 13")
+) %>%
+  filter(traits %in% valid_trait_names) %>%
+  mutate(
+    avg_win_rate = round(avg_win_rate, 4),
+    avg_top4_rate = round(avg_top4_rate, 4)
+  ) %>%
+  arrange(desc(avg_win_rate))
+
+# Display the interactive table
+datatable(
+  trait_table_data,
+  options = list(pageLength = 10, scrollX = TRUE),
+  rownames = FALSE,
+  colnames = c("Trait", "Avg Win Rate", "Avg Top 4 Rate", "Count", "Set"),
+  caption = "Interactive Table: Trait-Level Win Rate Summary"
+)
+```
+
+## Predicting Win Rate: Stats, Traits, and Models
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Regression: Champion Stats vs. Win Rate & Top 4 Rate
+#############################################
+
+# Average stats across star levels per champion for Set 12
+champion_avg_stats_set12 <- arranged_champions_set12 %>%
+  group_by(champion) %>%
+  summarise(
+    cost = mean(cost, na.rm = TRUE),
+    health = mean(health, na.rm = TRUE),
+    damage = mean(damage, na.rm = TRUE),
+    dps = mean(dps, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Average stats across star levels per champion for Set 13
+champion_avg_stats_set13 <- arranged_champions_set13 %>%
+  group_by(champion) %>%
+  summarise(
+    cost = mean(cost, na.rm = TRUE),
+    health = mean(health, na.rm = TRUE),
+    damage = mean(damage, na.rm = TRUE),
+    dps = mean(dps, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Join averaged stats with composition data (Set 12)
+regression_df_set12 <- comp_df_clean_set12_exploded %>%
+  left_join(champion_avg_stats_set12, by = c("champions" = "champion")) %>%
+  filter(!is.na(health), !is.na(dps), !is.na(damage)) %>%
+  mutate(set = "Set 12")
+
+# Join averaged stats with composition data (Set 13)
+regression_df_set13 <- comp_df_clean_set13_exploded %>%
+  left_join(champion_avg_stats_set13, by = c("champions" = "champion")) %>%
+  filter(!is.na(health), !is.na(dps), !is.na(damage)) %>%
+  mutate(set = "Set 13")
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Prepare Trait Dummies and Merge with Stats (Set 12 & Set 13)
+#############################################
+
+# Clean and combine traits into dummy variables per champion (Set 12)
+trait_dummies_set12 <- all_data_set12$trait_info %>%
+  mutate(trait_name = make.names(trait_name)) %>%  # Handles spaces, punctuation
+  select(champion, trait_name) %>%
+  mutate(value = 1) %>%
+  pivot_wider(names_from = trait_name, values_from = value, values_fill = 0)
+
+# Clean and combine traits into dummy variables per champion (Set 13)
+trait_dummies_set13 <- all_data_set13$trait_info %>%
+  mutate(trait_name = make.names(trait_name)) %>%
+  select(champion, trait_name) %>%
+  mutate(value = 1) %>%
+  pivot_wider(names_from = trait_name, values_from = value, values_fill = 0)
+
+# Merge stats + traits for Set 12
+regression_full_set12 <- regression_df_set12 %>%
+  left_join(trait_dummies_set12, by = c("champions" = "champion"))
+
+# Merge stats + traits for Set 13
+regression_full_set13 <- regression_df_set13 %>%
+  left_join(trait_dummies_set13, by = c("champions" = "champion"))
+
+# Helper function: remove columns with <2 unique values (no variation)
+drop_constant_columns <- function(df) {
+  df %>%
+    select(where(~ n_distinct(.) > 1)) %>%
+    drop_na()
+}
+
+# Traits only (drop stats) and drop constant traits
+regression_traits_only_set12 <- regression_full_set12 %>%
+  select(-c(cost, health, damage, dps)) %>%
+  drop_constant_columns()
+
+regression_traits_only_set13 <- regression_full_set13 %>%
+  select(-c(cost, health, damage, dps)) %>%
+  drop_constant_columns()
+
+# Full set (stats + traits) with constant traits dropped
+regression_full_set12 <- regression_full_set12 %>%
+  drop_constant_columns()
+
+regression_full_set13 <- regression_full_set13 %>%
+  drop_constant_columns()
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Linear Models (LM) - Win Rate ~ Champion Stats, Traits, and Both
+#############################################
+
+# Set 12 - Linear Models
+lm_stats_set12 <- lm(win_rate ~ cost + health + damage + dps, data = regression_df_set12)
+lm_traits_set12 <- lm(win_rate ~ ., data = regression_traits_only_set12 %>% select(-top4_rate))
+lm_both_set12 <- lm(win_rate ~ ., data = regression_full_set12 %>% select(-top4_rate))
+
+# Set 13 - Linear Models
+lm_stats_set13 <- lm(win_rate ~ cost + health + damage + dps, data = regression_df_set13)
+lm_traits_set13 <- lm(win_rate ~ ., data = regression_traits_only_set13 %>% select(-top4_rate))
+lm_both_set13 <- lm(win_rate ~ ., data = regression_full_set13 %>% select(-top4_rate))
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Helper: Safe Formula Constructor (With Backticks)
+#############################################
+
+safe_formula_string <- function(df, response, exclude = NULL) {
+  predictors <- df %>%
+    select(where(is.numeric)) %>%               # Keep only numeric columns
+    select(-all_of(c(response, exclude))) %>%   # Drop response and excluded
+    names()                                     # Get column names
+  
+  predictors_wrapped <- paste0("`", predictors, "`")  # Backtick everything
+  as.formula(paste(response, "~", paste(predictors_wrapped, collapse = " + ")))
+}
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Generalized Additive Models (GAM) - Win Rate ~ Champion Stats, Traits, and Both
+#############################################
+
+# Set 12
+gam_stats_set12 <- gam(win_rate ~ s(cost, k = 4) + s(health) + s(damage) + s(dps), data = regression_df_set12)
+
+gam_traits_set12 <- gam(
+  formula = safe_formula_string(regression_traits_only_set12, "win_rate", exclude = "top4_rate"),
+  data = regression_traits_only_set12
+)
+
+gam_both_set12 <- gam(
+  formula = safe_formula_string(regression_full_set12, "win_rate", exclude = "top4_rate"),
+  data = regression_full_set12
+)
+
+# Set 13
+gam_stats_set13 <- gam(win_rate ~ s(cost, k = 4) + s(health) + s(damage) + s(dps), data = regression_df_set13)
+
+gam_traits_set13 <- gam(
+  formula = safe_formula_string(regression_traits_only_set13, "win_rate", exclude = "top4_rate"),
+  data = regression_traits_only_set13
+)
+
+gam_both_set13 <- gam(
+  formula = safe_formula_string(regression_full_set13, "win_rate", exclude = "top4_rate"),
+  data = regression_full_set13
+)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Random Forest (RF) - Win Rate ~ Champion Stats, Traits, and Both
+#############################################
+
+# Set 12 - RF
+rf_stats_set12 <- randomForest(win_rate ~ cost + health + damage + dps, data = regression_df_set12, ntree = 500)
+rf_traits_set12 <- randomForest(win_rate ~ ., data = regression_traits_only_set12 %>% select(-top4_rate), ntree = 500)
+rf_both_set12 <- randomForest(win_rate ~ ., data = regression_full_set12 %>% select(-top4_rate), ntree = 500)
+
+# Set 13 - RF
+rf_stats_set13 <- randomForest(win_rate ~ cost + health + damage + dps, data = regression_df_set13, ntree = 500)
+rf_traits_set13 <- randomForest(win_rate ~ ., data = regression_traits_only_set13 %>% select(-top4_rate), ntree = 500)
+rf_both_set13 <- randomForest(win_rate ~ ., data = regression_full_set13 %>% select(-top4_rate), ntree = 500)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Model Comparison Table - R², RMSE, AIC
+#############################################
+
+model_comparison <- tibble::tibble(
+  Model_Type = rep(c("LM", "GAM", "RF"), each = 6),
+  Set = rep(rep(c("Set 12", "Set 13"), each = 3), times = 3),
+  Input = rep(c("Stats only", "Traits only", "Both"), times = 6),
+
+  R2 = c(
+    # LM
+    summary(lm_stats_set12)$adj.r.squared,
+    summary(lm_traits_set12)$adj.r.squared,
+    summary(lm_both_set12)$adj.r.squared,
+    summary(lm_stats_set13)$adj.r.squared,
+    summary(lm_traits_set13)$adj.r.squared,
+    summary(lm_both_set13)$adj.r.squared,
+
+    # GAM
+    summary(gam_stats_set12)$r.sq,
+    summary(gam_traits_set12)$r.sq,
+    summary(gam_both_set12)$r.sq,
+    summary(gam_stats_set13)$r.sq,
+    summary(gam_traits_set13)$r.sq,
+    summary(gam_both_set13)$r.sq,
+
+    # RF
+    tail(rf_stats_set12$rsq, 1),
+    tail(rf_traits_set12$rsq, 1),
+    tail(rf_both_set12$rsq, 1),
+    tail(rf_stats_set13$rsq, 1),
+    tail(rf_traits_set13$rsq, 1),
+    tail(rf_both_set13$rsq, 1)
+  ),
+
+  RMSE = c(
+    # LM
+    sqrt(mean(residuals(lm_stats_set12)^2)),
+    sqrt(mean(residuals(lm_traits_set12)^2)),
+    sqrt(mean(residuals(lm_both_set12)^2)),
+    sqrt(mean(residuals(lm_stats_set13)^2)),
+    sqrt(mean(residuals(lm_traits_set13)^2)),
+    sqrt(mean(residuals(lm_both_set13)^2)),
+
+    # GAM
+    sqrt(mean(residuals(gam_stats_set12)^2)),
+    sqrt(mean(residuals(gam_traits_set12)^2)),
+    sqrt(mean(residuals(gam_both_set12)^2)),
+    sqrt(mean(residuals(gam_stats_set13)^2)),
+    sqrt(mean(residuals(gam_traits_set13)^2)),
+    sqrt(mean(residuals(gam_both_set13)^2)),
+
+    # RF
+    sqrt(mean(rf_stats_set12$mse)),
+    sqrt(mean(rf_traits_set12$mse)),
+    sqrt(mean(rf_both_set12$mse)),
+    sqrt(mean(rf_stats_set13$mse)),
+    sqrt(mean(rf_traits_set13$mse)),
+    sqrt(mean(rf_both_set13$mse))
+  ),
+
+  AIC = c(
+    # LM
+    AIC(lm_stats_set12),
+    AIC(lm_traits_set12),
+    AIC(lm_both_set12),
+    AIC(lm_stats_set13),
+    AIC(lm_traits_set13),
+    AIC(lm_both_set13),
+
+    # GAM
+    AIC(gam_stats_set12),
+    AIC(gam_traits_set12),
+    AIC(gam_both_set12),
+    AIC(gam_stats_set13),
+    AIC(gam_traits_set13),
+    AIC(gam_both_set13),
+
+    # RF — not defined
+    rep(NA, 6)
+  )
+)
+
+# Display
+knitr::kable(model_comparison, digits = 4, format = "html", caption = "Model Comparison: R², RMSE, AIC (if applicable)") %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+```
+
+Random Forest with traits only is the best model overall because it has the highest R^2 and lowest RMSE across both sets, indicating strong predictive performance. Linear models likely overfit, as shown by perfect R^2 and zero RMSE, while GAMs perform worse in both R² and RMSE without gains in AIC. Traits only outperforms stats only and both combined, likely because stats add noise or redundant information.
+
+## Trait Importance Analysis
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#############################################
+# Random Forest (RF) - Trait Importance for Win Rate and Top 4 Rate
+#############################################
+
+# Helper function: Fit Random Forest and extract top 15 variable importances
+get_top_traits_clean <- function(df, response_var, remove_var) {
+  clean_df <- df %>%
+    select(-traits, -champions, -all_of(remove_var)) %>%
+    drop_na()
+
+  rf_model <- randomForest(
+    as.formula(paste(response_var, "~ .")),
+    data = clean_df,
+    ntree = 500
+  )
+
+  imp_vals <- importance(rf_model)
+  imp_df <- data.frame(Trait = rownames(imp_vals), Importance = imp_vals[, 1])
+  top15 <- imp_df %>%
+    arrange(desc(Importance)) %>%
+    head(15)
+  return(top15)
+}
+
+# Extract top traits (removing the other target variable!)
+top15_set12_winrate <- get_top_traits_clean(regression_traits_only_set12, "win_rate", "top4_rate")
+top15_set12_top4rate <- get_top_traits_clean(regression_traits_only_set12, "top4_rate", "win_rate")
+top15_set13_winrate <- get_top_traits_clean(regression_traits_only_set13, "win_rate", "top4_rate")
+top15_set13_top4rate <- get_top_traits_clean(regression_traits_only_set13, "top4_rate", "win_rate")
+
+# Helper function to generate a plot
+make_plot <- function(df, set_label, metric_label, fill_color) {
+  ggplot(df, aes(x = reorder(Trait, Importance), y = Importance)) +
+    geom_col(fill = fill_color) +
+    coord_flip() +
+    labs(
+      title = paste("Top 15 Traits for", metric_label, "-", set_label),
+      x = "Trait",
+      y = "Importance"
+    ) +
+    theme_minimal()
+}
+
+# Create each plot
+plot1 <- make_plot(top15_set12_winrate, "Set 12", "Win Rate", "#2E86C1")
+plot2 <- make_plot(top15_set12_top4rate, "Set 12", "Top 4 Rate", "#2E86C1")
+plot3 <- make_plot(top15_set13_winrate, "Set 13", "Win Rate", "#C0392B")
+plot4 <- make_plot(top15_set13_top4rate, "Set 13", "Top 4 Rate", "#C0392B")
+
+# Display plots in 2x2 layout
+grid.arrange(plot1, plot2, plot3, plot4, ncol = 2)
+```
+
+From the figure above, the best traits for Set 12 are Vanguard, Blaster and Honeymancy, while the best traits for Set 13 are Artillerist, Ambusher and Experiment. 
 
 # Summary
 
-The analysis shows that champion statistics (Health, Damage, and DPS) consistently increase with both cost and star level in both sets, with Set 13 exhibiting a steeper gradient and notably higher values—especially among the new 6-cost champions. Normalized stat comparisons reveal that while higher-cost units naturally have larger absolute stats, lower-cost champions (such as 1-cost) offer better value when adjusted for cost. Overall, these results support the hypotheses that the introduction of 6-cost champions significantly alters the power curve, that the stat-to-cost ratio declines with increasing cost, and that champion stat scaling across star levels remains consistent despite balance changes.
+This project examined how champion stats, traits, and design shifts between Set 12 and Set 13 in *Teamfight Tactics* (TFT) impact team performance, using thousands of real team compositions and multiple modeling approaches.
 
-# Final Project Plan
+### Key Findings
 
-Moving forward, the project will expand to incorporate win rate data from either the Riot API or alternative scraping sources to assess how champion traits and compositions correlate with victory outcomes. Additional steps will include advanced regression and multivariate analyses to quantify the relationships between cost, stat scaling, and overall performance, as well as clustering techniques to identify groups of champions with similar profiles. 
+- **Champion Stat Scaling**  
+  In both sets, champion stats (Health, Damage, DPS) scale positively with cost and star level. Set 13 introduces a **steeper scaling curve**, largely due to the addition of **6-cost champions** who significantly outpace lower-cost units in raw stats. This supports the hypothesis that Set 13 expands the power curve substantially.
+
+- **Normalized Stat Efficiency**  
+  When adjusting for star-up cost, **1-cost units deliver the highest value**, with normalized Health, Damage, and DPS declining as cost increases. This confirms the second hypothesis: high-cost units are not necessarily the most efficient in terms of stat-to-cost ratio.
+
+- **Stat Consistency Across Sets**  
+  Stat progression across star levels is consistent between the two sets. This suggests that while overall power increased in Set 13 (due to new unit types), **the underlying scaling formulas were preserved**.
+
+- **Trait Importance Over Stats**  
+  Random Forest models consistently identified **traits as stronger predictors** of win rate and top 4 rate compared to raw stats. This reinforces the idea that **synergy effects from traits dominate individual stat advantages**, aligning with the fourth hypothesis.
+
+- **Model Performance**  
+  Among all models tested (LM, GAM, RF), **Random Forest with trait-only inputs** yielded the highest $R^2$ and lowest RMSE. This shows that nonlinear, interaction-heavy models are best suited to capture TFT’s complexity, supporting the final hypothesis.
+
+- **Best Traits by Set**  
+  Trait importance analysis revealed that top-performing traits differ across sets:  
+  - *Set 12*: Vanguard, Blaster, and Honeymancy were most impactful  
+  - *Set 13*: Artillerist, Ambusher, and Experiment stood out
+
+### Overall Conclusion
+
+The introduction of 6-cost units in Set 13 redefined the TFT metagame by raising power ceilings while preserving relative scaling rules. However, **raw stats alone do not determine success**. Instead, **team synergy via traits** remains the most reliable pathway to victory. Effective composition building relies not just on strong units, but on how well those units activate and complement each other's traits.
